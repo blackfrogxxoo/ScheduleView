@@ -22,6 +22,7 @@ class ThreeDayView @JvmOverloads constructor(
         updatePadding(top = canvasPadding, bottom = canvasPadding)
     }
 
+    private lateinit var canvas: Canvas
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     override lateinit var widget: ICalendarWidget
     override val calendarPosition: Point = Point()
