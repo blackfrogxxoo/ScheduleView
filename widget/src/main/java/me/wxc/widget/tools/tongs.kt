@@ -8,8 +8,10 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.fragment.app.Fragment
 import me.wxc.widget.ICalendarComponent
+import me.wxc.widget.ICalendarModel
 import java.util.*
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 val View.TAG: String
     get() = this::class.java.simpleName
@@ -27,47 +29,108 @@ val screenWidth: Int
 val screenHeight: Int
     get() = Resources.getSystem().displayMetrics.heightPixels
 
-val clockWidth = 70f.dp
+// TODO 抽象为ICalendarRender的属性
+val clockWidth = 56f.dp
 val clockHeight = 50f.dp
 val dayHeight = 50f.dp * 24
 val dayWidth = (screenWidth - clockWidth) / 3
-val dayLineHeight = 80f.dp
+val dateLineHeight = 60f.dp
+val canvasPadding = 10.dp
+val zeroClockY = dateLineHeight + canvasPadding
 
-fun MotionEvent.ifInRect(rectF: RectF?): Boolean {
-    return x > (rectF?.left ?: -1f) && x < (rectF?.right ?: -1f) && y > (rectF?.top
-        ?: -1f) && y < (rectF?.bottom ?: -1f)
+fun MotionEvent.ifInRect(rectF: RectF?, padding: Int = 0): Boolean {
+    if (rectF == null) return false
+    return x > rectF.left - padding && x < rectF.right + padding && y > rectF.top - padding && y < rectF.bottom + padding
+}
+
+fun MotionEvent.ifAtRectTop(rectF: RectF?, padding: Int = 0): Boolean {
+    if (rectF == null) return false
+    return x > rectF.left - padding && x < rectF.right + padding && y > rectF.top - padding && y < rectF.top + 4f.dp + padding
+}
+
+fun MotionEvent.ifAtRectBottom(rectF: RectF?, padding: Int = 0): Boolean {
+    if (rectF == null) return false
+    return x > rectF.left - padding && x < rectF.right + padding && y > rectF.bottom - 4f.dp - padding && y < rectF.bottom + padding
 }
 
 fun RectF.ifVisible(view: View): Boolean {
-    return right > view.left && left < view.right && bottom > view.top && top < view.bottom
+    return right >= view.left && left <= view.right && bottom >= view.top && top <= view.bottom
 }
 
-fun ICalendarComponent<*>.originPosition(): Point {
+fun Long.originPosition(): Point {
     // x轴： 与当天的间隔天数 * 一天的宽度
     // y轴： 当前分钟数 / 一天的分钟数 * 一天的高度
-    val today = System.currentTimeMillis().days
-    val day = model.startTime.days
+    val today = System.currentTimeMillis().dDays
+    val day = dDays
     val x = clockWidth + (day - today) * dayWidth
     val zeroClock = Calendar.getInstance().apply {
-        time = Date(model.startTime)
+        time = Date(this@originPosition)
         set(Calendar.HOUR_OF_DAY, 0)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
     }
-    val y = dayHeight * (model.startTime - zeroClock.time.time) / (hourMills * 24)
+    val y = dayHeight * (this - zeroClock.time.time) / (hourMills * 24)
     return Point(x.toInt(), y.toInt())
 }
 
-fun ICalendarComponent<*>.originRect(): RectF {
+fun Point.distanceToChangedTime(): Long {
+    val dDays = -(x / dayWidth).roundToInt()
+    val dMills = -hourMills * y / clockHeight
+    return (hourMills * 24 * dDays + dMills).toLong()
+}
+
+fun ICalendarComponent<*>.refreshRect() {
     // x轴： 与当天的间隔天数 * 一天的宽度
     // y轴： 当前分钟数 / 一天的分钟数 * 一天的高度
-    val today = System.currentTimeMillis().days
-    val day = model.startTime.days
+    val today = System.currentTimeMillis().dDays
+    val day = model.startTime.dDays
     val left = clockWidth + (day - today) * dayWidth
     val right = left + dayWidth
     val zeroClock = startOfDay(model.startTime)
-    val top = dayLineHeight + dayHeight * (model.startTime - zeroClock.time.time) / (hourMills * 24)
-    val bottom = dayLineHeight + dayHeight * (model.endTime - zeroClock.time.time) / (hourMills * 24)
+    val top = dateLineHeight + dayHeight * (model.startTime - zeroClock.time.time) / (hourMills * 24)
+    val bottom = dateLineHeight + dayHeight * (model.endTime - zeroClock.time.time) / (hourMills * 24)
+    originRect.set(left, top, right, bottom)
+}
+
+fun ICalendarModel.originRect(): RectF {
+    // x轴： 与当天的间隔天数 * 一天的宽度
+    // y轴： 当前分钟数 / 一天的分钟数 * 一天的高度
+    val today = System.currentTimeMillis().dDays
+    val day = startTime.dDays
+    val left = clockWidth + (day - today) * dayWidth
+    val right = left + dayWidth
+    val zeroClock = startOfDay(startTime)
+    val top = dateLineHeight + dayHeight * (startTime - zeroClock.time.time) / (hourMills * 24)
+    val bottom = dateLineHeight + dayHeight * (endTime - zeroClock.time.time) / (hourMills * 24)
     return RectF(left, top, right, bottom)
+}
+
+fun ICalendarComponent<*>.originRect(): RectF = model.originRect()
+
+fun Point.positionToTime(scrollX: Int = 0, scrollY: Int = 0): Long {
+    val days = ((x - clockWidth + scrollX) / dayWidth).roundToInt()
+    val mills = ((y - dateLineHeight + scrollY) * hourMills / clockHeight).roundToLong()
+    val calendar = startOfDay().apply {
+        add(Calendar.DAY_OF_YEAR, days)
+    }
+    return calendar.timeInMillis + mills
+}
+
+val Float.yToMills: Long
+    get() = (this * hourMills / clockHeight).roundToLong()
+
+fun RectF.move(x: Int = 0, y: Int = 0) {
+    left += x
+    right += x
+    top += y
+    bottom += y
+}
+
+fun RectF?.topPoint(): Point? {
+    return this?.run { Point(left.toInt(), top.toInt()) }
+}
+
+fun RectF?.bottomPoint(): Point? {
+    return this?.run { Point(left.toInt(), bottom.toInt()) }
 }

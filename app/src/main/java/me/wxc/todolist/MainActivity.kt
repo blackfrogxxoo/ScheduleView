@@ -1,41 +1,55 @@
 package me.wxc.todolist
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.snackbar.Snackbar
 import me.wxc.todolist.databinding.ActivityMainBinding
-import me.wxc.widget.ICalendarModel
-import me.wxc.widget.components.ClockLineModel
 import me.wxc.widget.components.DailyTaskModel
-import me.wxc.widget.components.DateLineBgModel
-import me.wxc.widget.components.DateLineModel
-import me.wxc.widget.tools.CalendarScroller
-import me.wxc.widget.tools.hourMills
-import me.wxc.widget.tools.startOfDay
+import me.wxc.widget.tools.*
+import java.text.SimpleDateFormat
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-
+    private val sdf_yyyyM = SimpleDateFormat("yyyy年M月")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        CalendarScroller(binding.container)
+        val calendarWidget = CalendarWidget(binding.container)
+        binding.yyyyM.text = sdf_yyyyM.format(System.currentTimeMillis())
+        calendarWidget.onDateSelectedListener = {
+            Log.i(TAG, "date select: ${sdf_yyyyMMddHHmmss.format(timeInMillis)}")
+            binding.yyyyM.text = sdf_yyyyM.format(timeInMillis)
+            binding.fab.rotation = if (timeInMillis.dDays > System.currentTimeMillis().dDays) {
+                0f
+            } else if (timeInMillis.dDays < System.currentTimeMillis().dDays) {
+                180f
+            } else {
+                90f
+            }
+        }
         binding.container.adapter.models.apply {
-            add(DateLineBgModel)
             add(
                 DailyTaskModel(
-                    startTime = startOfDay().timeInMillis,
+                    startTime = startOfDay().timeInMillis + 5 * hourMills,
                     duration = hourMills,
-                    title = "打麻将"
+                    title = "抓💰"
                 )
             )
             add(
                 DailyTaskModel(
-                    startTime = System.currentTimeMillis(),
+                    startTime = startOfDay().timeInMillis - 40 * hourMills,
+                    duration = hourMills,
+                    title = "摸🐠🐟"
+                )
+            )
+            add(
+                DailyTaskModel(
+                    startTime = System.currentTimeMillis() - 2 * hourMills,
                     duration = hourMills,
                     title = "打麻将"
                 )
@@ -47,13 +61,24 @@ class MainActivity : AppCompatActivity() {
                     title = "吃火锅"
                 )
             )
+            add(
+                DailyTaskModel(
+                    startTime = System.currentTimeMillis() + 41 * hourMills,
+                    duration = (2.5f * hourMills).toLong(),
+                    title = "打游戏"
+                )
+            )
         }
-        binding.container.adapter.notifyDataChanged()
-
+        binding.container.adapter.notifyModelsChanged()
+        binding.container.onDailyTaskClickBlock = {
+            Toast.makeText(this@MainActivity, title, Toast.LENGTH_SHORT).show()
+        }
+        binding.container.onCreateTaskClickBlock = {
+            Toast.makeText(this@MainActivity, title, Toast.LENGTH_SHORT).show()
+        }
 
         binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+            calendarWidget.resetScrollState()
         }
     }
 }
