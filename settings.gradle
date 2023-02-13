@@ -3,6 +3,8 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven { url 'https://android-nexus.int.kuaiyin123.net/repository/stonesx' }
+        maven { url 'https://android-nexus.int.kuaiyin123.net/repository/stonesx-snapshots' }
     }
 }
 dependencyResolutionManagement {
@@ -10,6 +12,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://android-nexus.int.kuaiyin123.net/repository/stonesx' }
+        maven { url 'https://android-nexus.int.kuaiyin123.net/repository/stonesx-snapshots' }
     }
 }
 rootProject.name = "TodoList"

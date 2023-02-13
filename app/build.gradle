@@ -1,20 +1,29 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.stonesx.plugins.repository'
+    id 'com.google.devtools.ksp' version '1.8.0-1.0.8'
 }
 
 android {
     namespace 'me.wxc.todolist'
-    compileSdk 32
+    compileSdk 33
 
     defaultConfig {
         applicationId "me.wxc.todolist"
         minSdk 24
-        targetSdk 32
+        targetSdk 33
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        ksp {
+            arg("stonesXDatasourceDebug", "true")
+//            arg("stonesXRetrofitEnable", "false")
+            arg("stonesXRoomEnable", "true")
+//            arg("stonesXShellList", "com.example.stonesx.http.ApiResponse，com.example.stonesx.http.ApiResponse")
+        }
     }
 
     buildTypes {
@@ -37,10 +46,15 @@ android {
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.core:core-ktx:1.8.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+//    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.0'
 
     implementation project(":widget")
+    implementation 'com.stonesx.datasource:repository:1.0.0'
+    ksp 'com.stonesx.datasource:repository-compiler:1.0.0'
+    implementation 'com.stonesx.datasource.db:db-room:1.0.0'
+    ksp 'androidx.room:room-compiler:2.5.0'
 }
