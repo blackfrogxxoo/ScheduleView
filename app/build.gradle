@@ -42,19 +42,31 @@ android {
     buildFeatures {
         viewBinding true
     }
+    kotlin {
+        sourceSets {
+            main.kotlin.srcDirs += 'build/generated/ksp'
+        }
+    }
 }
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-//    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.0'
+
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.5.1"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1"
+    implementation "androidx.fragment:fragment-ktx:1.4.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.2"
 
     implementation project(":widget")
-    implementation 'com.stonesx.datasource:repository:1.0.0'
-    ksp 'com.stonesx.datasource:repository-compiler:1.0.0'
-    implementation 'com.stonesx.datasource.db:db-room:1.0.0'
-    ksp 'androidx.room:room-compiler:2.5.0'
+
+//    implementation 'com.stonesx.datasource.http:http-retrofit:1.0.0'
+    implementation "com.stonesx.datasource:repository:1.0.0"
+    ksp "com.stonesx.datasource:repository-compiler:1.0.0"
+    implementation "com.stonesx.datasource.db:db-room:1.0.0"
+    ksp "androidx.room:room-compiler:2.5.0"
 }

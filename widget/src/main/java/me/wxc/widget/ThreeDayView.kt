@@ -27,8 +27,8 @@ class ThreeDayView @JvmOverloads constructor(
     override lateinit var widget: ICalendarWidget
     override val calendarPosition: Point = Point()
     override val adapter: ICalendarRenderAdapter = ThreeDayAdapter()
-    override var onDailyTaskClickBlock: DailyTaskModel.() -> Unit = {}
-    override var onCreateTaskClickBlock: CreateTaskModel.() -> Unit = {}
+    override var onDailyTaskClickBlock: (model: DailyTaskModel) -> Unit = {}
+    override var onCreateTaskClickBlock: (model: CreateTaskModel) -> Unit = {}
 
     override fun render(x: Int, y: Int) {
         calendarPosition.x = x

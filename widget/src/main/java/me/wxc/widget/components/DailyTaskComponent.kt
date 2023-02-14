@@ -120,6 +120,7 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ICalendarComponen
 }
 
 data class DailyTaskModel(
+    val id: Long = 0,
     override var startTime: Long = System.currentTimeMillis(),
     val duration: Long = hourMills,
     var title: String,
