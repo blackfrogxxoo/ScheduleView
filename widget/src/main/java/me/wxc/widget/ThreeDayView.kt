@@ -22,7 +22,6 @@ class ThreeDayView @JvmOverloads constructor(
         updatePadding(top = canvasPadding, bottom = canvasPadding)
     }
 
-    private lateinit var canvas: Canvas
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     override lateinit var widget: ICalendarWidget
     override val calendarPosition: Point = Point()
@@ -40,7 +39,7 @@ class ThreeDayView @JvmOverloads constructor(
         super.onDraw(canvas)
         adapter.visibleComponents.forEach {
             it.updateDrawingRect(calendarPosition)
-            if (it.drawingRect.ifVisible(this) || it is CreateTaskComponent) {
+            if (it.drawingRect.ifVisible(this) || it is CreateTaskComponent || it is DateLineComponent) {
                 it.onDraw(canvas, paint)
             }
         }
@@ -97,12 +96,9 @@ class ThreeDayAdapter : ICalendarRenderAdapter {
         for (i in 0..24) {
             add(ClockLineModel(i))
         }
-        // TODO 支持动态添加/删除
-        for (i in -3650..3650) {
-            add(DateLineModel(i))
-        }
+        add(DateLineModel)
         add(NowLineModel)
-        add(DateLineShadowModel)
+//        add(DateLineShadowModel)
     }
 
     private var _visibleComponents: List<ICalendarComponent<*>> = listOf()
@@ -112,9 +108,8 @@ class ThreeDayAdapter : ICalendarRenderAdapter {
     override fun onCreateComponent(model: ICalendarModel): ICalendarComponent<*>? {
         // TODO 引入对象缓存机制
         return when (model) {
-            is ClockLineModel -> ClockTextComponent(model)
+            is ClockLineModel -> ClockLineComponent(model)
             is DateLineModel -> DateLineComponent(model)
-            is DateLineShadowModel -> DateLineShadowComponent()
             is CreateTaskModel -> CreateTaskComponent(model)
             is DailyTaskModel -> DailyTaskComponent(model)
             is NowLineModel -> NowLineComponent(model)
@@ -123,24 +118,20 @@ class ThreeDayAdapter : ICalendarRenderAdapter {
     }
 
     override fun notifyModelsChanged() {
-        _visibleComponents = models.mapNotNull { onCreateComponent(it) }.sortedBy {
-            when (it) {
-                is NowLineComponent -> 1
-                is DateLineShadowComponent -> 2
-                else -> 0
-            }
-        }
+        _visibleComponents = models.mapNotNull { onCreateComponent(it) }.sortComponent()
     }
 
     override fun notifyModelAdded(model: ICalendarModel) {
         _visibleComponents = _visibleComponents.toMutableList().apply {
             onCreateComponent(model)?.let { add(it) }
-        }.sortedBy {
-            when (it) {
-                is NowLineComponent -> 1
-                is DateLineShadowComponent -> 2
-                else -> 0
-            }
+        }.sortComponent()
+    }
+
+    private fun List<ICalendarComponent<*>>.sortComponent(): List<ICalendarComponent<*>> = sortedBy {
+        when (it) {
+            is NowLineComponent -> 1
+            is DateLineComponent -> 2
+            else -> 0
         }
     }
 

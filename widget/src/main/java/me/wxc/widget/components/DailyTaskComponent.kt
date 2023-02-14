@@ -129,5 +129,5 @@ data class DailyTaskModel(
         get() = startTime + duration
 
     internal val expired: Boolean
-        get() = System.currentTimeMillis() > startTime
+        get() = System.currentTimeMillis() > endTime
 }

@@ -120,6 +120,9 @@ fun Point.positionToTime(scrollX: Int = 0, scrollY: Int = 0): Long {
 val Float.yToMills: Long
     get() = (this * hourMills / clockHeight).roundToLong()
 
+val Float.xToDDays: Int
+    get() = ((this - clockWidth) / dayWidth).toInt()
+
 fun RectF.move(x: Int = 0, y: Int = 0) {
     left += x
     right += x

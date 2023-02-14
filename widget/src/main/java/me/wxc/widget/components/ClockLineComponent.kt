@@ -5,7 +5,7 @@ import me.wxc.widget.ICalendarComponent
 import me.wxc.widget.ICalendarModel
 import me.wxc.widget.tools.*
 
-class ClockTextComponent(override var model: ClockLineModel) : ICalendarComponent<ClockLineModel> {
+class ClockLineComponent(override var model: ClockLineModel) : ICalendarComponent<ClockLineModel> {
     override val originRect: RectF = originRect().apply {
         left = 0f
         right = parentWidth.toFloat()
