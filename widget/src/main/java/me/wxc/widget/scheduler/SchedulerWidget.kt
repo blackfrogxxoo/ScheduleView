@@ -1,4 +1,4 @@
-package me.wxc.widget.tools
+package me.wxc.widget.scheduler
 
 import android.animation.ValueAnimator
 import android.util.Log
@@ -9,24 +9,25 @@ import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.Scroller
 import androidx.core.view.doOnLayout
-import me.wxc.widget.ICalendarRender
-import me.wxc.widget.ICalendarTaskCreator
-import me.wxc.widget.ICalendarWidget
-import me.wxc.widget.ICalendarWidget.Companion.TAG
-import me.wxc.widget.components.CreateTaskComponent
-import me.wxc.widget.components.DailyTaskComponent
+import me.wxc.widget.base.ISchedulerRender
+import me.wxc.widget.base.ISchedulerTaskCreator
+import me.wxc.widget.base.ISchedulerWidget
+import me.wxc.widget.base.ISchedulerWidget.Companion.TAG
+import me.wxc.widget.scheduler.components.CreateTaskComponent
+import me.wxc.widget.scheduler.components.DailyTaskComponent
+import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
-class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
+class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget {
     private val MIN_SCROLL_Y = 0
     private val MAX_SCROLL_Y: Int
         get() = dayHeight.roundToInt() + dateLineHeight.roundToInt() - (render as View).height + (render as View).paddingTop + (render as View).paddingBottom
 
-    override var renderRange: ICalendarWidget.RenderRange by Delegates.observable(ICalendarWidget.RenderRange.ThreeDayRange) { _, _, value ->
-        isThreeDay = value is ICalendarWidget.RenderRange.ThreeDayRange
+    override var renderRange: ISchedulerWidget.RenderRange by Delegates.observable(ISchedulerWidget.RenderRange.ThreeDayRange) { _, _, value ->
+        isThreeDay = value is ISchedulerWidget.RenderRange.ThreeDayRange
         render.adapter.notifyModelsChanged()
         resetScrollState()
     }
@@ -56,7 +57,7 @@ class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
     private var scrollHorizontal = false
 
     init {
-        isThreeDay = renderRange is ICalendarWidget.RenderRange.ThreeDayRange
+        isThreeDay = renderRange is ISchedulerWidget.RenderRange.ThreeDayRange
         render.widget = this
         (render as View).doOnLayout {
             scrollY = initializedY()
@@ -90,13 +91,13 @@ class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
                         render.adapter.visibleComponents.mapNotNull { it as? DailyTaskComponent }
                             .find { e.ifInRect(it.drawingRect) }
                     clickedTask?.let {
-                        (render as? ICalendarTaskCreator)?.onDailyTaskClickBlock?.invoke(it.model)
+                        (render as? ISchedulerTaskCreator)?.onDailyTaskClickBlock?.invoke(it.model)
                         return true
                     }
                     val downOnBody = e.x > clockWidth && e.y > dateLineHeight
                     if (downOnBody
                         && !removingCreateTask
-                        && (render as? ICalendarTaskCreator)?.addCreateTask(e) == true
+                        && (render as? ISchedulerTaskCreator)?.addCreateTask(e) == true
                     ) {
                         onScroll(scrollX, scrollY)
                     }
@@ -133,7 +134,7 @@ class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
             removingCreateTask = false
             createTaskComponent?.let {
                 if (!downOnCreate) {
-                    (render as? ICalendarTaskCreator)?.removeCreateTask()
+                    (render as? ISchedulerTaskCreator)?.removeCreateTask()
                     removingCreateTask = true
                 }
             }
@@ -252,7 +253,7 @@ class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
     }
 
     override fun resetScrollState() {
-        (render as? ICalendarTaskCreator)?.removeCreateTask()
+        (render as? ISchedulerTaskCreator)?.removeCreateTask()
         scrollTo(0, initializedY())
     }
 

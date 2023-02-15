@@ -1,16 +1,16 @@
-package me.wxc.widget
+package me.wxc.widget.base
 
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Point
 import android.graphics.RectF
 import android.view.MotionEvent
-import me.wxc.widget.components.CreateTaskModel
-import me.wxc.widget.components.DailyTaskModel
+import me.wxc.widget.scheduler.components.CreateTaskModel
+import me.wxc.widget.scheduler.components.DailyTaskModel
 import java.util.*
 
-interface ICalendarWidget {
-    val render: ICalendarRender
+interface ISchedulerWidget {
+    val render: ISchedulerRender
     val renderRange: RenderRange
     val onDateSelectedListener: Calendar.() -> Unit
     fun onTouchEvent(motionEvent: MotionEvent): Boolean
@@ -25,26 +25,26 @@ interface ICalendarWidget {
     }
 
     companion object {
-        val ICalendarWidget.TAG: String
+        val ISchedulerWidget.TAG: String
             get() = this::class.java.simpleName
     }
 }
 
-interface ICalendarRender {
-    var widget: ICalendarWidget
+interface ISchedulerRender {
+    var widget: ISchedulerWidget
     val calendarPosition: Point
-    val adapter: ICalendarRenderAdapter
+    val adapter: ISchedulerRenderAdapter
     fun render(x: Int, y: Int)
 }
 
-interface ICalendarTaskCreator {
+interface ISchedulerTaskCreator {
     val onDailyTaskClickBlock: DailyTaskModel.() -> Unit
     val onCreateTaskClickBlock: CreateTaskModel.() -> Unit
     fun addCreateTask(motionEvent: MotionEvent): Boolean
     fun removeCreateTask(): Boolean
 }
 
-interface ICalendarComponent<T : ICalendarModel> {
+interface ISchedulerComponent<T : ISchedulerModel> {
     var model: T
     val originRect: RectF
     val drawingRect: RectF
@@ -53,27 +53,27 @@ interface ICalendarComponent<T : ICalendarModel> {
     fun onTouchEvent(e: MotionEvent): Boolean = false
 
     companion object {
-        val ICalendarComponent<*>.TAG: String
+        val ISchedulerComponent<*>.TAG: String
             get() = this::class.java.simpleName
     }
 }
 
-interface ICalendarRenderAdapter {
-    var models: MutableList<ICalendarModel>
-    val visibleComponents: List<ICalendarComponent<*>>
-    fun onCreateComponent(model: ICalendarModel): ICalendarComponent<*>?
+interface ISchedulerRenderAdapter {
+    var models: MutableList<ISchedulerModel>
+    val visibleComponents: List<ISchedulerComponent<*>>
+    fun onCreateComponent(model: ISchedulerModel): ISchedulerComponent<*>?
     fun notifyModelsChanged()
-    fun notifyModelAdded(model: ICalendarModel)
-    fun notifyModelRemoved(model: ICalendarModel)
+    fun notifyModelAdded(model: ISchedulerModel)
+    fun notifyModelRemoved(model: ISchedulerModel)
 }
 
 // TODO 可编辑逻辑从CreateTaskComponent抽象于此
-interface ICalendarEditable {
+interface ISchedulerEditable {
     val editable: Boolean
     val editingRect: RectF?
 }
 
-interface ICalendarModel {
+interface ISchedulerModel {
     val startTime: Long
     val endTime: Long
 }

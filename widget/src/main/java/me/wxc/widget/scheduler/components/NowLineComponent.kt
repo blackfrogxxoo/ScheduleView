@@ -1,11 +1,11 @@
-package me.wxc.widget.components
+package me.wxc.widget.scheduler.components
 
 import android.graphics.*
-import me.wxc.widget.ICalendarComponent
-import me.wxc.widget.ICalendarModel
+import me.wxc.widget.base.ISchedulerComponent
+import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
 
-class NowLineComponent(override var model: NowLineModel) : ICalendarComponent<NowLineModel> {
+class NowLineComponent(override var model: NowLineModel) : ISchedulerComponent<NowLineModel> {
     override val originRect: RectF = originRect()
     override val drawingRect: RectF = originRect()
 
@@ -40,7 +40,7 @@ class NowLineComponent(override var model: NowLineModel) : ICalendarComponent<No
     }
 }
 
-object NowLineModel : ICalendarModel {
+object NowLineModel : ISchedulerModel {
     override val startTime: Long
         get() = System.currentTimeMillis()
     override val endTime: Long

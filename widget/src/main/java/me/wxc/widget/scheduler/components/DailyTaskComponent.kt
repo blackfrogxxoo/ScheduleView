@@ -1,13 +1,13 @@
-package me.wxc.widget.components
+package me.wxc.widget.scheduler.components
 
 import android.graphics.*
-import me.wxc.widget.ICalendarComponent
-import me.wxc.widget.ICalendarEditable
-import me.wxc.widget.ICalendarModel
+import me.wxc.widget.base.ISchedulerComponent
+import me.wxc.widget.base.ISchedulerEditable
+import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
 
-class DailyTaskComponent(override var model: DailyTaskModel) : ICalendarComponent<DailyTaskModel>,
-    ICalendarEditable {
+class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerComponent<DailyTaskModel>,
+    ISchedulerEditable {
     override val drawingRect: RectF = originRect()
     override val originRect: RectF = originRect()
     private val bgColor = if (model.expired) {
@@ -124,7 +124,7 @@ data class DailyTaskModel(
     override var startTime: Long = System.currentTimeMillis(),
     val duration: Long = hourMills,
     var title: String,
-) : ICalendarModel {
+) : ISchedulerModel {
     override val endTime: Long
         get() = startTime + duration
 

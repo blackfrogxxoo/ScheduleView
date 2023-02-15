@@ -1,11 +1,11 @@
-package me.wxc.widget.components
+package me.wxc.widget.scheduler.components
 
 import android.graphics.*
-import me.wxc.widget.ICalendarComponent
-import me.wxc.widget.ICalendarModel
+import me.wxc.widget.base.ISchedulerComponent
+import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
 
-class ClockLineComponent(override var model: ClockLineModel) : ICalendarComponent<ClockLineModel> {
+class ClockLineComponent(override var model: ClockLineModel) : ISchedulerComponent<ClockLineModel> {
     override val originRect: RectF = originRect().apply {
         left = 0f
         right = parentWidth.toFloat()
@@ -86,7 +86,7 @@ class ClockLineComponent(override var model: ClockLineModel) : ICalendarComponen
 data class ClockLineModel(
     val clock: Int,
     var createTaskModel: CreateTaskModel? = null
-) : ICalendarModel {
+) : ISchedulerModel {
     private val zeroClock = startOfDay()
     override val startTime: Long = zeroClock.timeInMillis + clock * hourMills
     override val endTime: Long = zeroClock.timeInMillis + (clock + 1) * hourMills

@@ -1,14 +1,14 @@
-package me.wxc.widget.components
+package me.wxc.widget.scheduler.components
 
 import android.graphics.*
-import me.wxc.widget.ICalendarComponent
-import me.wxc.widget.ICalendarModel
+import me.wxc.widget.base.ISchedulerComponent
+import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
 import java.util.Calendar
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class WeekLineComponent(override var model: WeekLineModel) : ICalendarComponent<WeekLineModel> {
+class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent<WeekLineModel> {
     override val originRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     override val drawingRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     private val shadowRect: RectF = RectF(
@@ -121,7 +121,7 @@ class WeekLineComponent(override var model: WeekLineModel) : ICalendarComponent<
     }
 }
 
-object WeekLineModel : ICalendarModel {
+object WeekLineModel : ISchedulerModel {
     override var startTime: Long = 0
     override var endTime: Long = 0
 }

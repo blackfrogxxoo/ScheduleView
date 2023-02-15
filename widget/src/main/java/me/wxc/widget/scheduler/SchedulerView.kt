@@ -1,4 +1,4 @@
-package me.wxc.widget
+package me.wxc.widget.scheduler
 
 import android.content.Context
 import android.graphics.Canvas
@@ -11,21 +11,22 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.core.graphics.toPoint
 import androidx.core.view.updatePadding
-import me.wxc.widget.components.*
+import me.wxc.widget.base.*
+import me.wxc.widget.scheduler.components.*
 import me.wxc.widget.tools.*
 
 class SchedulerView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), ICalendarRender, ICalendarTaskCreator {
+) : View(context, attrs, defStyleAttr), ISchedulerRender, ISchedulerTaskCreator {
 
     init {
         updatePadding(top = canvasPadding, bottom = canvasPadding)
     }
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    override lateinit var widget: ICalendarWidget
+    override lateinit var widget: ISchedulerWidget
     override val calendarPosition: Point = Point()
-    override val adapter: ICalendarRenderAdapter = ThreeDayAdapter()
+    override val adapter: ISchedulerRenderAdapter = ThreeDayAdapter()
     override var onDailyTaskClickBlock: (model: DailyTaskModel) -> Unit = {}
     override var onCreateTaskClickBlock: (model: CreateTaskModel) -> Unit = {}
 
@@ -91,8 +92,8 @@ class SchedulerView @JvmOverloads constructor(
     }
 }
 
-class ThreeDayAdapter : ICalendarRenderAdapter {
-    override var models: MutableList<ICalendarModel> = mutableListOf<ICalendarModel>().apply {
+class ThreeDayAdapter : ISchedulerRenderAdapter {
+    override var models: MutableList<ISchedulerModel> = mutableListOf<ISchedulerModel>().apply {
         for (i in 0..24) {
             add(ClockLineModel(i))
         }
@@ -101,15 +102,17 @@ class ThreeDayAdapter : ICalendarRenderAdapter {
 //        add(DateLineShadowModel)
     }
 
-    private var _visibleComponents: List<ICalendarComponent<*>> = listOf()
-    override val visibleComponents: List<ICalendarComponent<*>>
+    private var _visibleComponents: List<ISchedulerComponent<*>> = listOf()
+    override val visibleComponents: List<ISchedulerComponent<*>>
         get() = _visibleComponents
 
-    override fun onCreateComponent(model: ICalendarModel): ICalendarComponent<*>? {
+    override fun onCreateComponent(model: ISchedulerModel): ISchedulerComponent<*>? {
         // TODO 引入对象缓存机制
         return when (model) {
             is ClockLineModel -> ClockLineComponent(model)
-            is DateLineModel -> if (CalendarWidget.isThreeDay) DateLineComponent(model) else WeekLineComponent(WeekLineModel)
+            is DateLineModel -> if (SchedulerWidget.isThreeDay) DateLineComponent(model) else WeekLineComponent(
+                WeekLineModel
+            )
             is CreateTaskModel -> CreateTaskComponent(model)
             is DailyTaskModel -> DailyTaskComponent(model)
             is NowLineModel -> NowLineComponent(model)
@@ -121,13 +124,13 @@ class ThreeDayAdapter : ICalendarRenderAdapter {
         _visibleComponents = models.mapNotNull { onCreateComponent(it) }.sortComponent()
     }
 
-    override fun notifyModelAdded(model: ICalendarModel) {
+    override fun notifyModelAdded(model: ISchedulerModel) {
         _visibleComponents = _visibleComponents.toMutableList().apply {
             onCreateComponent(model)?.let { add(it) }
         }.sortComponent()
     }
 
-    private fun List<ICalendarComponent<*>>.sortComponent(): List<ICalendarComponent<*>> = sortedBy {
+    private fun List<ISchedulerComponent<*>>.sortComponent(): List<ISchedulerComponent<*>> = sortedBy {
         when (it) {
             is NowLineComponent -> 1
             is DateLineComponent -> 2
@@ -136,7 +139,7 @@ class ThreeDayAdapter : ICalendarRenderAdapter {
         }
     }
 
-    override fun notifyModelRemoved(model: ICalendarModel) {
+    override fun notifyModelRemoved(model: ISchedulerModel) {
         _visibleComponents = _visibleComponents.toMutableList().filterNot {
             it.model == model
         }.toList()

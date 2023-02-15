@@ -12,6 +12,9 @@ interface DailyTaskDao {
     @Query("SELECT * FROM daily_task")
     fun getAllDailyTasks(): List<DailyTaskLocal>
 
+    @Query("SELECT * FROM daily_task where startTime > :startTime and endTime < :endTime")
+    fun getRangeDailyTasks(startTime: Long, endTime: Long): List<DailyTaskLocal>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun putDailyTask(task: DailyTaskLocal) : Long
 

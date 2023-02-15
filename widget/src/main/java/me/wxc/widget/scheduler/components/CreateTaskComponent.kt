@@ -1,18 +1,18 @@
-package me.wxc.widget.components
+package me.wxc.widget.scheduler.components
 
 import android.graphics.*
 import android.util.Log
 import android.view.MotionEvent
-import me.wxc.widget.ICalendarComponent
-import me.wxc.widget.ICalendarComponent.Companion.TAG
-import me.wxc.widget.ICalendarEditable
-import me.wxc.widget.ICalendarModel
+import me.wxc.widget.base.ISchedulerComponent
+import me.wxc.widget.base.ISchedulerComponent.Companion.TAG
+import me.wxc.widget.base.ISchedulerEditable
+import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class CreateTaskComponent(override var model: CreateTaskModel) :
-    ICalendarComponent<CreateTaskModel>, ICalendarEditable {
+    ISchedulerComponent<CreateTaskModel>, ISchedulerEditable {
     override val originRect: RectF = originRect()
     override val drawingRect: RectF = originRect()
     private val circleRadius = 4f.dp
@@ -247,7 +247,7 @@ data class CreateTaskModel(
     var state: State = State.IDLE,
     val onClickBlock: CreateTaskModel.() -> Unit,
     val onNeedScrollBlock: (x: Int, y: Int) -> Unit
-) : ICalendarModel {
+) : ISchedulerModel {
     override val endTime: Long
         get() = startTime + duration
 

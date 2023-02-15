@@ -1,12 +1,12 @@
-package me.wxc.widget.components
+package me.wxc.widget.scheduler.components
 
 import android.graphics.*
-import me.wxc.widget.ICalendarComponent
-import me.wxc.widget.ICalendarModel
+import me.wxc.widget.base.ISchedulerComponent
+import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
 import kotlin.math.roundToInt
 
-class DateLineComponent(override var model: DateLineModel) : ICalendarComponent<DateLineModel> {
+class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent<DateLineModel> {
     override val originRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     override val drawingRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     private val shadowRect: RectF = RectF(
@@ -79,7 +79,7 @@ class DateLineComponent(override var model: DateLineModel) : ICalendarComponent<
     }
 }
 
-object DateLineModel : ICalendarModel {
+object DateLineModel : ISchedulerModel {
     override var startTime: Long = 0
     override var endTime: Long = 0
 }
