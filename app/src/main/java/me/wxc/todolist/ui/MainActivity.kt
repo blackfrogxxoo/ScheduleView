@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import me.wxc.todolist.databinding.ActivityMainBinding
+import me.wxc.widget.ICalendarWidget
 import me.wxc.widget.tools.CalendarWidget
 import me.wxc.widget.tools.TAG
 import me.wxc.widget.tools.dDays
@@ -61,6 +62,18 @@ class MainActivity : AppCompatActivity() {
 
         binding.fab.setOnClickListener { view ->
             calendarWidget.resetScrollState()
+        }
+        binding.switchRange.run {
+            textOff = "日"
+            textOn = "三日"
+            isChecked = true
+            setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    calendarWidget.renderRange = ICalendarWidget.RenderRange.ThreeDayRange
+                } else {
+                    calendarWidget.renderRange = ICalendarWidget.RenderRange.SingleDayRange
+                }
+            }
         }
     }
 }

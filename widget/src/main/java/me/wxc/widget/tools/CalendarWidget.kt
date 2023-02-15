@@ -18,11 +18,18 @@ import me.wxc.widget.components.DailyTaskComponent
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.properties.Delegates
 
 class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
     private val MIN_SCROLL_Y = 0
     private val MAX_SCROLL_Y: Int
-        get() = 50.dp * 24 + dateLineHeight.roundToInt() - (render as View).height + (render as View).paddingTop + (render as View).paddingBottom
+        get() = dayHeight.roundToInt() + dateLineHeight.roundToInt() - (render as View).height + (render as View).paddingTop + (render as View).paddingBottom
+
+    override var renderRange: ICalendarWidget.RenderRange by Delegates.observable(ICalendarWidget.RenderRange.ThreeDayRange) { _, _, value ->
+        isThreeDay = value is ICalendarWidget.RenderRange.ThreeDayRange
+        render.adapter.notifyModelsChanged()
+        resetScrollState()
+    }
 
     private var dDays = 0
     private var scrollX: Int = 0
@@ -49,6 +56,7 @@ class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
     private var scrollHorizontal = false
 
     init {
+        isThreeDay = renderRange is ICalendarWidget.RenderRange.ThreeDayRange
         render.widget = this
         (render as View).doOnLayout {
             scrollY = initializedY()
@@ -86,7 +94,10 @@ class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
                         return true
                     }
                     val downOnBody = e.x > clockWidth && e.y > dateLineHeight
-                    if (downOnBody && !removingCreateTask && (render as? ICalendarTaskCreator)?.addCreateTask(e) == true) {
+                    if (downOnBody
+                        && !removingCreateTask
+                        && (render as? ICalendarTaskCreator)?.addCreateTask(e) == true
+                    ) {
                         onScroll(scrollX, scrollY)
                     }
                     return true
@@ -147,18 +158,42 @@ class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
         Log.i(TAG, "snapToPosition: ")
         velocityTracker.computeCurrentVelocity(1000)
         if (scrollHorizontal) {
-            scroller.fling(
-                scrollX,
-                0,
-                -velocityTracker.xVelocity.toInt(),
-                0,
-                Int.MIN_VALUE,
-                Int.MAX_VALUE,
-                0,
-                0
-            )
             // 自适应滑动结束位置
-            scroller.finalX = ((scroller.finalX / dayWidth).roundToInt() * dayWidth).roundToInt()
+            if (isThreeDay) { // 三日视图，正常滑动距离
+                scroller.fling(
+                    scrollX,
+                    0,
+                    -velocityTracker.xVelocity.toInt(),
+                    0,
+                    Int.MIN_VALUE,
+                    Int.MAX_VALUE,
+                    0,
+                    0
+                )
+                scroller.finalX =
+                    ((scroller.finalX / dayWidth).roundToInt() * dayWidth).roundToInt()
+            } else { // 单日视图，滑动一页
+                scroller.fling(
+                    scrollX,
+                    0,
+                    -velocityTracker.xVelocity.toInt().coerceAtMost(200).coerceAtLeast(-200),
+                    0,
+                    Int.MIN_VALUE,
+                    Int.MAX_VALUE,
+                    0,
+                    0
+                )
+                val dest = scroller.finalX
+                if (dest > scrollX) {
+                    scroller.finalX =
+                        ((scrollX / dayWidth).roundToInt() * dayWidth).roundToInt() + dayWidth.roundToInt()
+                } else if (dest < scrollX) {
+                    scroller.finalX =
+                        ((scrollX / dayWidth).roundToInt() * dayWidth).roundToInt() - dayWidth.roundToInt()
+                } else {
+                    scroller.finalX = ((scrollX / dayWidth).roundToInt() * dayWidth).roundToInt()
+                }
+            }
         } else {
             scroller.fling(
                 scrollX,
@@ -227,12 +262,14 @@ class CalendarWidget(override val render: ICalendarRender) : ICalendarWidget {
 
     private fun initializedY() = run {
         val mills = System.currentTimeMillis() - startOfDay().timeInMillis
-        val centerMills = ((render as View).height / 2 - zeroClockY / 2 - (render as View).paddingTop) * hourMills / clockHeight
+        val centerMills =
+            ((render as View).height / 2 - zeroClockY / 2 - (render as View).paddingTop) * hourMills / clockHeight
         ((mills - centerMills) * clockHeight / hourMills).toInt().coerceAtMost(MAX_SCROLL_Y)
             .coerceAtLeast(MIN_SCROLL_Y)
     }
 
     companion object {
+        var isThreeDay = false
     }
 }
 

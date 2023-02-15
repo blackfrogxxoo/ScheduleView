@@ -33,7 +33,6 @@ val screenHeight: Int
 val clockWidth = 56f.dp
 val clockHeight = 50f.dp
 val dayHeight = 50f.dp * 24
-val dayWidth = (screenWidth - clockWidth) / 3
 val dateLineHeight = 60f.dp
 val canvasPadding = 10.dp
 val zeroClockY = dateLineHeight + canvasPadding
@@ -45,39 +44,16 @@ fun MotionEvent.ifInRect(rectF: RectF?, padding: Int = 0): Boolean {
 
 fun MotionEvent.ifAtRectTop(rectF: RectF?, padding: Int = 0): Boolean {
     if (rectF == null) return false
-    return x > rectF.left - padding && x < rectF.right + padding && y > rectF.top - padding && y < rectF.top + 4f.dp + padding
+    return x > rectF.left - padding && x < rectF.right + padding && y > rectF.top - 2 * padding && y < rectF.top + padding
 }
 
 fun MotionEvent.ifAtRectBottom(rectF: RectF?, padding: Int = 0): Boolean {
     if (rectF == null) return false
-    return x > rectF.left - padding && x < rectF.right + padding && y > rectF.bottom - 4f.dp - padding && y < rectF.bottom + padding
+    return x > rectF.left - padding && x < rectF.right + padding && y > rectF.bottom - padding && y < rectF.bottom + 2 * padding
 }
 
 fun RectF.ifVisible(view: View): Boolean {
     return right >= view.left && left <= view.right && bottom >= view.top && top <= view.bottom
-}
-
-fun Long.originPosition(): Point {
-    // x轴： 与当天的间隔天数 * 一天的宽度
-    // y轴： 当前分钟数 / 一天的分钟数 * 一天的高度
-    val today = System.currentTimeMillis().dDays
-    val day = dDays
-    val x = clockWidth + (day - today) * dayWidth
-    val zeroClock = Calendar.getInstance().apply {
-        time = Date(this@originPosition)
-        set(Calendar.HOUR_OF_DAY, 0)
-        set(Calendar.MINUTE, 0)
-        set(Calendar.SECOND, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
-    val y = dayHeight * (this - zeroClock.time.time) / (hourMills * 24)
-    return Point(x.toInt(), y.toInt())
-}
-
-fun Point.distanceToChangedTime(): Long {
-    val dDays = -(x / dayWidth).roundToInt()
-    val dMills = -hourMills * y / clockHeight
-    return (hourMills * 24 * dDays + dMills).toLong()
 }
 
 fun ICalendarComponent<*>.refreshRect() {
@@ -121,7 +97,7 @@ val Float.yToMills: Long
     get() = (this * hourMills / clockHeight).roundToLong()
 
 val Float.xToDDays: Int
-    get() = ((this - clockWidth) / dayWidth).toInt()
+    get() = ((this - clockWidth) / dayWidth).roundToInt()
 
 fun RectF.move(x: Int = 0, y: Int = 0) {
     left += x

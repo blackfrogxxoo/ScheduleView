@@ -11,12 +11,18 @@ import java.util.*
 
 interface ICalendarWidget {
     val render: ICalendarRender
+    val renderRange: RenderRange
     val onDateSelectedListener: Calendar.() -> Unit
     fun onTouchEvent(motionEvent: MotionEvent): Boolean
     fun onScroll(x: Int, y: Int)
     fun scrollTo(x: Int, y: Int)
     fun resetScrollState()
     fun isScrolling(): Boolean
+
+    sealed interface RenderRange {
+        object SingleDayRange : RenderRange
+        object ThreeDayRange : RenderRange
+    }
 
     companion object {
         val ICalendarWidget.TAG: String
@@ -45,6 +51,7 @@ interface ICalendarComponent<T : ICalendarModel> {
     fun onDraw(canvas: Canvas, paint: Paint)
     fun updateDrawingRect(anchorPoint: Point)
     fun onTouchEvent(e: MotionEvent): Boolean = false
+
     companion object {
         val ICalendarComponent<*>.TAG: String
             get() = this::class.java.simpleName
@@ -54,7 +61,7 @@ interface ICalendarComponent<T : ICalendarModel> {
 interface ICalendarRenderAdapter {
     var models: MutableList<ICalendarModel>
     val visibleComponents: List<ICalendarComponent<*>>
-    fun onCreateComponent(model: ICalendarModel) : ICalendarComponent<*>?
+    fun onCreateComponent(model: ICalendarModel): ICalendarComponent<*>?
     fun notifyModelsChanged()
     fun notifyModelAdded(model: ICalendarModel)
     fun notifyModelRemoved(model: ICalendarModel)

@@ -14,7 +14,7 @@ import androidx.core.view.updatePadding
 import me.wxc.widget.components.*
 import me.wxc.widget.tools.*
 
-class ThreeDayView @JvmOverloads constructor(
+class SchedulerView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr), ICalendarRender, ICalendarTaskCreator {
 
@@ -109,7 +109,7 @@ class ThreeDayAdapter : ICalendarRenderAdapter {
         // TODO 引入对象缓存机制
         return when (model) {
             is ClockLineModel -> ClockLineComponent(model)
-            is DateLineModel -> DateLineComponent(model)
+            is DateLineModel -> if (CalendarWidget.isThreeDay) DateLineComponent(model) else WeekLineComponent(WeekLineModel)
             is CreateTaskModel -> CreateTaskComponent(model)
             is DailyTaskModel -> DailyTaskComponent(model)
             is NowLineModel -> NowLineComponent(model)
@@ -131,6 +131,7 @@ class ThreeDayAdapter : ICalendarRenderAdapter {
         when (it) {
             is NowLineComponent -> 1
             is DateLineComponent -> 2
+            is WeekLineComponent -> 2
             else -> 0
         }
     }

@@ -47,6 +47,19 @@ val Long.dayOfWeekText: String
         }
     }
 
+val Long.dayOfWeekTextSimple: String
+    get() = run {
+        when (calendar.get(Calendar.DAY_OF_WEEK)) {
+            Calendar.SUNDAY -> "日"
+            Calendar.MONDAY -> "一"
+            Calendar.TUESDAY -> "二"
+            Calendar.WEDNESDAY -> "三"
+            Calendar.THURSDAY -> "四"
+            Calendar.FRIDAY -> "五"
+            else -> "六"
+        }
+    }
+
 val Long.hhMM: String
     get() = sdf_HHmm.format(this)
 
