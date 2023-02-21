@@ -1,6 +1,7 @@
 package me.wxc.widget.scheduler.components
 
 import android.graphics.*
+import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ISchedulerComponent
 import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
@@ -29,8 +30,8 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
             shadowRect.top,
             shadowRect.left,
             shadowRect.bottom,
-            Color.parseColor("#20000000"),
-            Color.parseColor("#00000000"),
+            SchedulerConfig.colorTransparent2,
+            SchedulerConfig.colorTransparent1,
             Shader.TileMode.CLAMP
         )
     }
@@ -51,9 +52,9 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
             val selected = calendar.timeInMillis.dDays.toInt() == (parentScrollX + clockWidth).xToDDays
             if (selected) {
                 paint.color = if (dDays != 0L) {
-                    Color.LTGRAY
+                    SchedulerConfig.colorBlack4
                 } else {
-                    Color.BLUE
+                    SchedulerConfig.colorBlue1
                 }
                 canvas.drawCircle(
                     centerX,
@@ -64,14 +65,14 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
             }
             paint.color = if (dDays == 0L) {
                 if (selected) {
-                    Color.WHITE
+                    SchedulerConfig.colorWhite
                 } else {
-                    Color.BLUE
+                    SchedulerConfig.colorBlue1
                 }
             } else if (dDays < 0) {
-                Color.GRAY
+                SchedulerConfig.colorBlack3
             } else {
-                Color.BLACK
+                SchedulerConfig.colorBlack1
             }
             paint.textSize = 16f.dp
             paint.isFakeBoldText = true
@@ -82,11 +83,11 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
                 paint
             )
             paint.color = if (dDays == 0L) {
-                Color.BLUE
+                SchedulerConfig.colorBlue1
             } else if (dDays < 0) {
-                Color.GRAY
+                SchedulerConfig.colorBlack3
             } else {
-                Color.BLACK
+                SchedulerConfig.colorBlack1
             }
             paint.textSize = 11f.dp
             paint.isFakeBoldText = false

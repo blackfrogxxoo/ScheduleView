@@ -3,27 +3,41 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="60dp">
+    android:layout_height="wrap_content">
+
+    <View
+        android:id="@+id/label"
+        android:layout_width="8dp"
+        android:layout_height="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="4dp"
+        android:background="@color/blue1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/title" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:textColor="#666769"
+        android:layout_marginTop="15dp"
+        android:fontFamily="@font/product_sans_regular2"
+        android:textColor="@color/black2"
         android:textSize="14sp"
         app:layout_constraintBottom_toTopOf="@id/timeRange"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/label"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed"
-        tools:text="日程名" />
+        tools:text="日程名\nadad" />
 
     <TextView
         android:id="@+id/timeRange"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:textColor="#969799"
+        android:layout_marginBottom="15dp"
+        android:fontFamily="@font/product_sans_regular2"
+        android:textColor="@color/black2"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@id/title"
@@ -34,10 +48,10 @@
         android:id="@+id/fg"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginTop="6dp"
         android:layout_marginBottom="6dp"
-        android:background="#AAFFFFFF"/>
+        android:background="@color/transparent3"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

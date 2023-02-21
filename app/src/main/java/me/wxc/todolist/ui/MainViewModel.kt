@@ -28,15 +28,60 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    suspend fun removeDailyTask(model: DailyTaskModel, adapterModels: MutableList<ISchedulerModel>) {
+    suspend fun getRangeDailyTask(
+        startTime: Long,
+        endTime: Long
+    ): List<ISchedulerModel> = withContext(Dispatchers.IO) {
+        RepositoryManager.getInstance().findRepository(
+            DailyTaskRepository::class.java
+        )
+            .getRangeDailyTasks(startTime, endTime).map {
+                DailyTaskModel(
+                    id = it.id,
+                    startTime = it.startTime,
+                    duration = it.endTime - it.startTime,
+                    title = it.title
+                )
+            }
+    }
+
+    suspend fun removeDailyTask(
+        model: DailyTaskModel,
+        adapterModels: MutableList<ISchedulerModel>
+    ) {
         withContext(Dispatchers.IO) {
-            RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java).removeById(model.id)
+            RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java)
+                .removeById(model.id)
             adapterModels.remove(model)
         }
     }
 
-    suspend fun saveCreateDailyTask(model: CreateTaskModel, adapterModels: MutableList<ISchedulerModel>) {
+    suspend fun updateDailyTask(
+        model: DailyTaskModel,
+        adapterModels: MutableList<ISchedulerModel>
+    ) {
         withContext(Dispatchers.IO) {
+            RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java).putDailyTask(
+                DailyTaskLocal(
+                    id = model.id,
+                    startTime = model.startTime,
+                    endTime = model.endTime,
+                    title = model.title,
+            )
+            )
+            adapterModels.remove(model)
+            adapterModels.add(model)
+        }
+    }
+
+    suspend fun saveCreateDailyTask(
+        model: CreateTaskModel,
+        adapterModels: MutableList<ISchedulerModel>
+    ) {
+        withContext(Dispatchers.IO) {
+            if (model.title.isBlank()) {
+                model.title = "(无主题)"
+            }
             val id = RepositoryManager.getInstance()
                 .findRepository(DailyTaskRepository::class.java)
                 .putDailyTask(

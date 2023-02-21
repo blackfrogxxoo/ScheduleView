@@ -1,6 +1,7 @@
 package me.wxc.widget.scheduler.components
 
 import android.graphics.*
+import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ISchedulerComponent
 import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
@@ -24,8 +25,8 @@ class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent
             shadowRect.top,
             shadowRect.left,
             shadowRect.bottom,
-            Color.parseColor("#20000000"),
-            Color.parseColor("#00000000"),
+            SchedulerConfig.colorTransparent2,
+            SchedulerConfig.colorTransparent1,
             Shader.TileMode.CLAMP
         )
     }
@@ -40,11 +41,11 @@ class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent
             val startTime = startOfDay().timeInMillis + startX.xToDDays * dayMills
             val dDays = startX.xToDDays - System.currentTimeMillis().dDays
             paint.color = if (dDays == 0L) {
-                Color.BLUE
+                SchedulerConfig.colorBlue1
             } else if (dDays < 0) {
-                Color.GRAY
+                SchedulerConfig.colorBlack3
             } else {
-                Color.BLACK
+                SchedulerConfig.colorBlack1
             }
             paint.textSize = 20f.dp
             paint.isFakeBoldText = true

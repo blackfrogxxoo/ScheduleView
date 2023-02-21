@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
+import me.wxc.widget.SchedulerConfig
+import me.wxc.widget.base.ISelectedTimeObserver
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.dDays
@@ -16,7 +18,7 @@ import java.util.*
 
 class DailyTaskListViewGroup @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
-) : StableOrientationRecyclerView(context, attrs), ICalendarRender {
+) : StableOrientationRecyclerView(context, attrs), ICalendarRender, ISelectedTimeObserver {
     override val parentRender: ICalendarRender
         get() = parent as ICalendarRender
     override val calendar: Calendar = startOfDay()
@@ -55,6 +57,7 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
                     dragged = true
                 }
             }
+
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
                 val llm = recyclerView.layoutManager as LinearLayoutManager
@@ -75,18 +78,23 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
         return super.dispatchTouchEvent(e)
     }
 
-    private fun onSelectedTime(time: Long) {
+    override fun onSelectedTime(time: Long) {
         val index = time.dDays - startTime.dDays
         if (selectedTime == -1L || selectedTime == time) {
             scrollToPosition(index.toInt())
         } else {
             smoothScrollToPosition(index.toInt())
         }
+        if (time != -1L) {
+            SchedulerConfig.onDateSelectedListener.invoke(startOfDay(startTime).apply {
+                add(Calendar.DAY_OF_WEEK, index.toInt())
+            })
+        }
     }
 
     class Adapter(
         private val startTime: Long,
-        private val schedulerModels: List<ISchedulerModel>
+        private var schedulerModels: List<ISchedulerModel>
     ) : RecyclerView.Adapter<VH>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             return VH(DailyTaskListView(parent.context).apply {

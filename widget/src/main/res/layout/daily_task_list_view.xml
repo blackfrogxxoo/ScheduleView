@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/daily_task_item_view"/>
+        tools:listitem="@layout/daily_task_item_view" />
 
     <TextView
         android:id="@+id/emptyView"
@@ -21,8 +21,9 @@
         android:layout_gravity="center"
         android:drawableTop="@drawable/ic_empty"
         android:drawablePadding="10dp"
+        android:fontFamily="@font/product_sans_regular2"
         android:text="暂无日程安排，点击创建"
-        android:textColor="@color/black"
+        android:textColor="@color/black1"
         android:textSize="14sp" />
 
 </merge>

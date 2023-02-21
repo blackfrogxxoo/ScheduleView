@@ -69,4 +69,6 @@ dependencies {
     ksp "com.stonesx.datasource:repository-compiler:1.0.0"
     implementation "com.stonesx.datasource.db:db-room:1.0.0"
     ksp "androidx.room:room-compiler:2.5.0"
+
+    implementation 'com.contrarywind:Android-PickerView:4.1.9'
 }

@@ -1,6 +1,7 @@
 package me.wxc.widget.scheduler.components
 
 import android.graphics.*
+import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ISchedulerComponent
 import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.*
@@ -32,13 +33,13 @@ class ClockLineComponent(override var model: ClockLineModel) : ISchedulerCompone
         parentHeight = canvas.height
         canvas.save()
         canvas.clipRect(0f, dateLineHeight, parentWidth.toFloat(), parentHeight.toFloat())
-        paint.color = Color.GRAY
+        paint.color = SchedulerConfig.colorBlack4
         paint.textSize = 12f.dp
         val startX = 12f.dp
         val y = drawingRect.top
         canvas.drawText(model.showText, startX, y + 4f.dp, paint)
-        paint.color = Color.LTGRAY
-        paint.strokeWidth = 0.5f.dp
+        paint.color = SchedulerConfig.colorBlack4
+        paint.strokeWidth = 1f
         val stopX = parentWidth.toFloat()
         paint.pathEffect = pathEffect
         canvas.drawLine(drawingRect.left + clockWidth + 1.5f.dp, y, stopX, y, paint)
@@ -63,7 +64,7 @@ class ClockLineComponent(override var model: ClockLineModel) : ISchedulerCompone
                 drawingRect.top + dayHeight * (adjustedEndTime - startOfDay(adjustedEndTime).timeInMillis - model.startTime + startOfDay(
                     model.startTime
                 ).timeInMillis) / (hourMills * 24)
-            paint.color = Color.parseColor("#4444FF")
+            paint.color = SchedulerConfig.colorBlue1
             if (createTop >= drawingRect.top && createTop < drawingRect.bottom && model.clock != 24) {
                 canvas.drawText(adjustedStartTime.hhMM, startX, createTop + 4f.dp, paint)
             }

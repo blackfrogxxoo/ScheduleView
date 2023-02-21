@@ -3,15 +3,19 @@ package me.wxc.widget.calender
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.util.AttributeSet
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.updatePadding
+import me.wxc.widget.R
+import me.wxc.widget.SchedulerConfig
+import me.wxc.widget.base.ISelectedTimeObserver
 import me.wxc.widget.base.ICalendarParent
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.ISchedulerModel
@@ -22,10 +26,11 @@ import kotlin.properties.Delegates
 
 class MonthView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : ViewGroup(context, attrs, defStyleAttr), ICalendarRender, ICalendarParent {
+) : ViewGroup(context, attrs, defStyleAttr), ICalendarRender, ICalendarParent,
+    ISelectedTimeObserver {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.GRAY
         textSize = 11f.dp
+        typeface = Typeface.create(ResourcesCompat.getFont(context, R.font.product_sans_regular2), Typeface.NORMAL)
     }
     private lateinit var dailyTaskListViewGroup: DailyTaskListViewGroup
 
@@ -54,9 +59,9 @@ class MonthView @JvmOverloads constructor(
         set(value) {
             field = value
             _children.forEach { child ->
-                child.schedulerModels =
-                    value.filter { it.startTime >= child.startTime && it.endTime <= child.endTime }
+                child.schedulerModels = child.schedulersFrom(value)
             }
+            dailyTaskListViewGroup.schedulerModels = dailyTaskListViewGroup.schedulersFrom(value)
         }
 
     override val children: List<ICalendarRender>
@@ -68,7 +73,7 @@ class MonthView @JvmOverloads constructor(
     private val dayWidth: Float = screenWidth / 7f
     private val dayHeight: Float
         get() = 1f * (measuredHeight - paddingTop) / (_children.size / 7)
-    private val topPadding = 20f.dp
+    private val topPadding = 26f.dp
     private var collapseLine = -1
         set(value) {
             onCollapseLineChanged(field, value)
@@ -84,26 +89,31 @@ class MonthView @JvmOverloads constructor(
         updatePadding(top = topPadding.roundToInt())
         dailyTaskListViewGroup = DailyTaskListViewGroup(context).apply {
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-            setBackgroundColor(Color.parseColor("#f1f2f3"))
+            setBackgroundColor(SchedulerConfig.colorBlack5)
         }
         addView(dailyTaskListViewGroup)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
+        paint.color = SchedulerConfig.colorBlack3
         for (i in 0 until 7) {
             val time = startTime + i * dayMills
             val left = 10f.dp + i * dayWidth
             canvas.drawText(time.dayOfWeekTextSimple, left, 15f.dp, paint)
         }
+        paint.color = SchedulerConfig.colorBlack4
+        paint.strokeWidth = .5f.dp
+        canvas.drawLine(0f, paddingTop.toFloat(), measuredWidth.toFloat(), paddingTop.toFloat(), paint)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         for (index in 0 until childCount) {
             val child = getChildAt(index)
             if (child is DailyTaskListViewGroup) {
-                child.layout(l, collapseTop.roundToInt(), r, collapseBottom.roundToInt())
+                if (!collapseTop.isNaN() && !collapseBottom.isNaN()) {
+                    child.layout(l, collapseTop.roundToInt(), r, collapseBottom.roundToInt())
+                }
                 continue
             }
             val calendar = (child as ICalendarRender).calendar
@@ -120,6 +130,7 @@ class MonthView @JvmOverloads constructor(
             }
             val right = left + dayWidth
             val bottom = top + dayHeight
+            if (top.isNaN()) continue
             child.layout(
                 left.roundToInt(),
                 top.roundToInt(),
@@ -133,8 +144,7 @@ class MonthView @JvmOverloads constructor(
         Log.i(TAG, "onCollapseLineChanged: $old, $new")
         if (old == -1 && new >= 0) {
             dailyTaskListViewGroup.calendar.timeInMillis = startTime + new * 7 * dayMills
-            dailyTaskListViewGroup.schedulerModels =
-                schedulerModels.filter { it.startTime >= dailyTaskListViewGroup.startTime && it.endTime <= dailyTaskListViewGroup.endTime }
+            dailyTaskListViewGroup.schedulerModels = schedulersFrom(schedulerModels)
             collapseCenter = paddingTop + (new + 1) * dayHeight
             val destTop = paddingTop + dayHeight
             val destBottom = if (new < _children.size / 7 - 1) {
@@ -190,7 +200,11 @@ class MonthView @JvmOverloads constructor(
         super.onAttachedToWindow()
         Log.i(
             TAG,
-            "onAttachedToWindow ${sdf_yyyyMMddHHmmss.format(startTime)} ${sdf_yyyyMMddHHmmss.format(endTime)}"
+            "onAttachedToWindow ${sdf_yyyyMMddHHmmss.format(startTime)} ${
+                sdf_yyyyMMddHHmmss.format(
+                    endTime
+                )
+            }"
         )
         if (_children.isEmpty()) {
             for (time in startTime..endTime step dayMills) {
@@ -206,8 +220,7 @@ class MonthView @JvmOverloads constructor(
                         }
                     }
                     if (schedulerModels.any()) {
-                        child.schedulerModels =
-                            schedulerModels.filter { it.startTime >= child.startTime && it.endTime <= child.endTime }
+                        child.schedulerModels = child.schedulersFrom(schedulerModels)
                     }
                 }
             }
@@ -218,7 +231,11 @@ class MonthView @JvmOverloads constructor(
         super.onDetachedFromWindow()
         Log.i(
             TAG,
-            "onDetachedFromWindow ${sdf_yyyyMMddHHmmss.format(startTime)} ${sdf_yyyyMMddHHmmss.format(endTime)}"
+            "onDetachedFromWindow ${sdf_yyyyMMddHHmmss.format(startTime)} ${
+                sdf_yyyyMMddHHmmss.format(
+                    endTime
+                )
+            }"
         )
         if (_children.isNotEmpty()) {
             _children.forEach {
@@ -227,5 +244,9 @@ class MonthView @JvmOverloads constructor(
             _children.clear()
         }
         selectedTime = -1L
+    }
+
+    override fun onSelectedTime(time: Long) {
+        collapseLine = -1
     }
 }

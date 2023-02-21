@@ -3,6 +3,7 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        jcenter()
         maven { url 'https://android-nexus.int.kuaiyin123.net/repository/stonesx' }
         maven { url 'https://android-nexus.int.kuaiyin123.net/repository/stonesx-snapshots' }
     }
@@ -12,6 +13,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        jcenter()
         maven { url 'https://android-nexus.int.kuaiyin123.net/repository/stonesx' }
         maven { url 'https://android-nexus.int.kuaiyin123.net/repository/stonesx-snapshots' }
     }

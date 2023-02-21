@@ -1,16 +1,16 @@
 package me.wxc.widget.scheduler
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Point
-import android.graphics.PointF
+import android.graphics.*
 import android.util.AttributeSet
 import android.util.Log
+import android.util.SparseArray
 import android.view.MotionEvent
 import android.view.View
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.toPoint
 import androidx.core.view.updatePadding
+import me.wxc.widget.R
 import me.wxc.widget.base.*
 import me.wxc.widget.scheduler.components.*
 import me.wxc.widget.tools.*
@@ -23,12 +23,12 @@ class SchedulerView @JvmOverloads constructor(
         updatePadding(top = canvasPadding, bottom = canvasPadding)
     }
 
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        typeface = Typeface.create(ResourcesCompat.getFont(context, R.font.product_sans_regular2), Typeface.NORMAL)
+    }
     override lateinit var widget: ISchedulerWidget
     override val calendarPosition: Point = Point()
     override val adapter: ISchedulerRenderAdapter = ThreeDayAdapter()
-    override var onDailyTaskClickBlock: (model: DailyTaskModel) -> Unit = {}
-    override var onCreateTaskClickBlock: (model: CreateTaskModel) -> Unit = {}
 
     override fun render(x: Int, y: Int) {
         calendarPosition.x = x
@@ -58,8 +58,7 @@ class SchedulerView @JvmOverloads constructor(
                 .positionToTime(-calendarPosition.x, -calendarPosition.y)
                 .adjustTimeInDay(quarterMills, true),
             duration = hourMills / 2,
-            title = "新建日程",
-            onClickBlock = onCreateTaskClickBlock,
+            title = "",
         ) { x, y ->
             if (!widget.isScrolling()) {
                 widget.scrollTo(-calendarPosition.x + x, -calendarPosition.y + paddingTop + y)
@@ -99,8 +98,8 @@ class ThreeDayAdapter : ISchedulerRenderAdapter {
         }
         add(DateLineModel)
         add(NowLineModel)
-//        add(DateLineShadowModel)
     }
+    override var modelsGroupByMonth: SparseArray<MutableList<ISchedulerModel>> = SparseArray()
 
     private var _visibleComponents: List<ISchedulerComponent<*>> = listOf()
     override val visibleComponents: List<ISchedulerComponent<*>>

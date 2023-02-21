@@ -7,8 +7,11 @@ import com.stonesx.datasource.room.RoomDataSourceFactory
 import me.wxc.todolist.data.DailyTaskDB
 
 class App : Application() {
+
+
     override fun onCreate() {
         super.onCreate()
+        self = this
         RepositoryContext.getInstance().capacityInitialize(0, 20)
         RepositoryContext.getInstance().dbInitialize(
             dbServerManager = {
@@ -19,5 +22,10 @@ class App : Application() {
             },
             dbDataSourceFactory = { RoomDataSourceFactory() }
         )
+    }
+
+    companion object {
+        lateinit var self: Application
+            private set
     }
 }

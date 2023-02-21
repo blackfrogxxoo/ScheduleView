@@ -4,19 +4,15 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Point
 import android.graphics.RectF
+import android.util.SparseArray
 import android.view.MotionEvent
-import me.wxc.widget.scheduler.components.CreateTaskModel
-import me.wxc.widget.scheduler.components.DailyTaskModel
-import java.util.*
 
-interface ISchedulerWidget {
+interface ISchedulerWidget : ISelectedTimeObserver {
     val render: ISchedulerRender
     val renderRange: RenderRange
-    val onDateSelectedListener: Calendar.() -> Unit
     fun onTouchEvent(motionEvent: MotionEvent): Boolean
     fun onScroll(x: Int, y: Int)
     fun scrollTo(x: Int, y: Int)
-    fun resetScrollState()
     fun isScrolling(): Boolean
 
     sealed interface RenderRange {
@@ -38,8 +34,6 @@ interface ISchedulerRender {
 }
 
 interface ISchedulerTaskCreator {
-    val onDailyTaskClickBlock: DailyTaskModel.() -> Unit
-    val onCreateTaskClickBlock: CreateTaskModel.() -> Unit
     fun addCreateTask(motionEvent: MotionEvent): Boolean
     fun removeCreateTask(): Boolean
 }
@@ -60,6 +54,7 @@ interface ISchedulerComponent<T : ISchedulerModel> {
 
 interface ISchedulerRenderAdapter {
     var models: MutableList<ISchedulerModel>
+    var modelsGroupByMonth: SparseArray<MutableList<ISchedulerModel>>
     val visibleComponents: List<ISchedulerComponent<*>>
     fun onCreateComponent(model: ISchedulerModel): ISchedulerComponent<*>?
     fun notifyModelsChanged()
@@ -73,7 +68,7 @@ interface ISchedulerEditable {
     val editingRect: RectF?
 }
 
-interface ISchedulerModel {
+interface ISchedulerModel : java.io.Serializable {
     val startTime: Long
     val endTime: Long
 }

@@ -1,6 +1,7 @@
 package me.wxc.widget.scheduler.components
 
 import android.graphics.*
+import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ISchedulerComponent
 import me.wxc.widget.base.ISchedulerEditable
 import me.wxc.widget.base.ISchedulerModel
@@ -11,21 +12,21 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
     override val drawingRect: RectF = originRect()
     override val originRect: RectF = originRect()
     private val bgColor = if (model.expired) {
-        Color.parseColor("#F2F2FF")
+        SchedulerConfig.colorBlue5
     } else {
-        Color.parseColor("#EEEEFF")
+        SchedulerConfig.colorBlue4
     }
     private val textColor = if (model.expired) {
-        Color.parseColor("#DDDDFF")
+        SchedulerConfig.colorBlue2
     } else {
-        Color.parseColor("#5555FF")
+        SchedulerConfig.colorBlue1
     }
     private val circleRadius = 4f.dp
     private val circlePadding = 20f.dp
 
     private val shader: Shader
         get() = run {
-            val color1 = Color.WHITE
+            val color1 = SchedulerConfig.colorTransparent1
             val color2 = bgColor
             val colors = intArrayOf(color1, color1, color2, color2)
             val positions = floatArrayOf(0f, 0.5f, 0.5f, 1.0f)
@@ -53,6 +54,7 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
         canvas.save()
         canvas.clipRect(clockWidth, dateLineHeight, parentWidth.toFloat(), parentHeight.toFloat())
         paint.shader = shader
+        paint.alpha = 255
         canvas.drawRoundRect(
             drawingRect.left + 4f.dp,
             drawingRect.top + 2f.dp,
@@ -63,6 +65,7 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
             paint
         )
         paint.shader = null
+        paint.alpha = 255
         paint.style = Paint.Style.STROKE
         paint.pathEffect = pathEffect
         paint.strokeWidth = 1f.dp
@@ -79,7 +82,7 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
         paint.pathEffect = null
         paint.style = Paint.Style.FILL
         paint.textSize = 14f.dp
-        canvas.drawText(model.title, drawingRect.left + 12f.dp, drawingRect.top + 22f.dp, paint)
+        canvas.drawText(model.title, drawingRect.left + 12f.dp, drawingRect.top + 22f.dp, paint, drawingRect.width() - 12f.dp)
         if (editable) { // TODO 长按改变editable
             drawUpdatingRect(canvas, paint, drawingRect)
         }
@@ -87,7 +90,7 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
     }
 
     private fun drawUpdatingRect(canvas: Canvas, paint: Paint, drawRect: RectF) {
-        paint.color = Color.parseColor("#4444ff")
+        paint.color = SchedulerConfig.colorBlue1
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 0.5f.dp
         canvas.drawRoundRect(
@@ -100,10 +103,10 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
             paint
         )
         paint.style = Paint.Style.FILL
-        paint.color = Color.WHITE
+        paint.color = SchedulerConfig.colorWhite
         canvas.drawCircle(drawRect.right - circlePadding, drawRect.top, circleRadius, paint)
         canvas.drawCircle(drawRect.left + circlePadding, drawRect.bottom, circleRadius, paint)
-        paint.color = Color.parseColor("#4444ff")
+        paint.color = SchedulerConfig.colorBlue1
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 2f.dp
         canvas.drawCircle(drawRect.right - circlePadding, drawRect.top, circleRadius, paint)
@@ -122,11 +125,21 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
 data class DailyTaskModel(
     val id: Long = 0,
     override var startTime: Long = System.currentTimeMillis(),
-    val duration: Long = hourMills,
+    var duration: Long = hourMills,
     var title: String,
 ) : ISchedulerModel {
     override val endTime: Long
         get() = startTime + duration
+
+    fun changeStartTime(time: Long) {
+        val temp = startTime
+        startTime = time
+        duration -= time - temp
+    }
+
+    fun changeEndTime(time: Long) {
+        duration += time - endTime
+    }
 
     internal val expired: Boolean
         get() = System.currentTimeMillis() > endTime
