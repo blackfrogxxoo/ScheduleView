@@ -12,7 +12,9 @@ import android.view.ViewGroup
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import androidx.recyclerview.widget.RecyclerView
 import me.wxc.widget.R
 import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ICalendarParent
@@ -57,12 +59,14 @@ class MonthView @JvmOverloads constructor(
             it.focusedDayTime = time
         }
         dailyTaskListViewGroup.focusedDayTime = time
-        if (time != -1L) {
-            SchedulerConfig.onDateSelectedListener.invoke(startOfDay(time))
-        } else if (System.currentTimeMillis() in (startTime + 1) until endTime) {
-            SchedulerConfig.onDateSelectedListener.invoke(startOfDay())
-        } else {
-            SchedulerConfig.onDateSelectedListener.invoke(startOfDay(startTime))
+        if ((parent as? RecyclerView)?.isVisible == true && (parent as? RecyclerView)?.scrollState == RecyclerView.SCROLL_STATE_IDLE) {
+            if (time != -1L) {
+                SchedulerConfig.onDateSelectedListener.invoke(startOfDay(time))
+            } else if (System.currentTimeMillis() in (startTime + 1) until endTime) {
+                SchedulerConfig.onDateSelectedListener.invoke(startOfDay())
+            } else {
+                SchedulerConfig.onDateSelectedListener.invoke(calendar)
+            }
         }
     }
     override var schedulerModels: List<ISchedulerModel> = listOf()
@@ -98,6 +102,7 @@ class MonthView @JvmOverloads constructor(
     private var collapseTop: Float = -1f
     private var collapseBottom: Float = -1f
 
+
     init {
         setWillNotDraw(false)
         updatePadding(top = topPadding.roundToInt())
@@ -111,10 +116,22 @@ class MonthView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         paint.color = SchedulerConfig.colorBlack3
+        val todayWeekDayIndex =
+            if (calendar.timeInMillis.dMonths == System.currentTimeMillis().dMonths) {
+                startOfDay().get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
+            } else {
+                -1
+            }
         for (i in 0 until 7) {
             val time = startTime + i * dayMills
             val left = 10f.dp + i * dayWidth
+            if (todayWeekDayIndex == i) {
+                paint.color = SchedulerConfig.colorBlue1
+            }
             canvas.drawText(time.dayOfWeekTextSimple, left, 15f.dp, paint)
+            if (todayWeekDayIndex == i) {
+                paint.color = SchedulerConfig.colorBlack3
+            }
         }
         paint.color = SchedulerConfig.colorBlack4
         paint.strokeWidth = .5f.dp
@@ -268,10 +285,6 @@ class MonthView @JvmOverloads constructor(
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
-        if (changedView == parent && visibility == GONE) { // FIXME: 临时处理的日期选中状态
-            postDelayed({
-                focusedDayTime = -1L
-            }, 100)
-        }
+        focusedDayTime = -1L
     }
 }
