@@ -45,16 +45,20 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
         scrollTo(scrollX, scrollY)
     }
 
-    private var dDays = 0
+    override var selectedDayTime: Long
+        set(value) {
+            (render as? ISchedulerTaskCreator)?.removeCreateTask()
+            scrollTo((dayWidth * value.dDays).roundToInt(), initializedY())
+        }
+        get() = startOfDay().timeInMillis + dDays * dayMills
+
+    private val dDays: Int
+        get() = (scrollX / dayWidth).toInt()
     private var scrollX: Int = 0
         set(value) {
             field = value
-            val days = (scroller.finalX / dayWidth).toInt()
-            if (dDays != days) {
-                SchedulerConfig.onDateSelectedListener.invoke(startOfDay().apply {
-                    add(Calendar.DAY_OF_YEAR, days)
-                })
-                dDays = days
+            if (scroller.isFinished) {
+                SchedulerConfig.onDateSelectedListener.invoke(startOfDay(selectedDayTime))
             }
         }
     private var scrollY: Int = 0
@@ -279,11 +283,6 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
         }
         scroller.startScroll(scrollX, scrollY, x - scrollX, y - scrollY)
         callOnScrolling(false)
-    }
-
-    override fun onSelectedTime(time: Long) {
-        (render as? ISchedulerTaskCreator)?.removeCreateTask()
-        scrollTo((dayWidth * time.dDays).roundToInt(), initializedY())
     }
 
     override fun isScrolling(): Boolean {

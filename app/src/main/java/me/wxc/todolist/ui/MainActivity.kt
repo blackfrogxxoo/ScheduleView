@@ -19,10 +19,7 @@ import me.wxc.widget.calender.MonthAdapter
 import me.wxc.widget.scheduler.SchedulerWidget
 import me.wxc.widget.scheduler.components.CreateTaskModel
 import me.wxc.widget.scheduler.components.DailyTaskModel
-import me.wxc.widget.tools.TAG
-import me.wxc.widget.tools.dDays
-import me.wxc.widget.tools.sdf_yyyyM
-import me.wxc.widget.tools.sdf_yyyyMMddHHmmss
+import me.wxc.widget.tools.*
 
 class MainActivity : AppCompatActivity() {
     private val mainViewModel by viewModels<MainViewModel>()
@@ -44,9 +41,9 @@ class MainActivity : AppCompatActivity() {
 
         binding.fab.setOnClickListener {
             if (binding.schedulerView.isVisible) {
-                calendarWidget.onSelectedTime()
+                calendarWidget.selectedDayTime = startOfDay().timeInMillis
             } else {
-                monthAdapter.onSelectedTime()
+                monthAdapter.selectedDayTime = startOfDay().timeInMillis
             }
         }
         binding.more.setOnClickListener {
@@ -60,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                             binding.monthViewList.visibility = View.GONE
                             calendarWidget.renderRange = ISchedulerWidget.RenderRange.ThreeDayRange
                             if (fromMonth) {
-                                calendarWidget.onSelectedTime(SchedulerConfig.selectedTime)
+                                calendarWidget.selectedDayTime = startOfDay(SchedulerConfig.selectedDayTime).timeInMillis
                             }
                         }
                         R.id.singleDay -> {
@@ -69,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                             binding.monthViewList.visibility = View.GONE
                             calendarWidget.renderRange = ISchedulerWidget.RenderRange.SingleDayRange
                             if (fromMonth) {
-                                calendarWidget.onSelectedTime(SchedulerConfig.selectedTime)
+                                calendarWidget.selectedDayTime = startOfDay(SchedulerConfig.selectedDayTime).timeInMillis
                             }
                         }
                         R.id.month -> {
@@ -77,11 +74,12 @@ class MainActivity : AppCompatActivity() {
                             binding.schedulerView.visibility = View.GONE
                             binding.monthViewList.visibility = View.VISIBLE
                             if (fromDay) {
-                                monthAdapter.onSelectedTime(SchedulerConfig.selectedTime)
+                                monthAdapter.selectedDayTime = startOfDay(SchedulerConfig.selectedDayTime).timeInMillis
                             }
                         }
                         else -> {}
                     }
+                    refreshArrow(SchedulerConfig.selectedDayTime)
                     true
                 }
                 show()
@@ -97,14 +95,8 @@ class MainActivity : AppCompatActivity() {
             onDateSelectedListener = {
                 Log.i(TAG, "date select: ${sdf_yyyyMMddHHmmss.format(timeInMillis)}")
                 binding.yyyyM.text = sdf_yyyyM.format(timeInMillis)
-                binding.fab.rotation = if (timeInMillis.dDays > System.currentTimeMillis().dDays) {
-                    0f
-                } else if (timeInMillis.dDays < System.currentTimeMillis().dDays) {
-                    180f
-                } else {
-                    90f
-                }
-                selectedTime = timeInMillis
+                refreshArrow(timeInMillis)
+                selectedDayTime = timeInMillis
             }
             schedulerModelsProvider = { startTime, endTime ->
                 mainViewModel.getRangeDailyTask(startTime, endTime)
@@ -155,6 +147,28 @@ class MainActivity : AppCompatActivity() {
                 }.show(supportFragmentManager, "DetailsFragment")
 
             }
+        }
+    }
+
+    private fun refreshArrow(time: Long) {
+        if (binding.schedulerView.isVisible) {
+            binding.fab.rotation =
+                if (time.dDays > System.currentTimeMillis().dDays) {
+                    0f
+                } else if (time.dDays < System.currentTimeMillis().dDays) {
+                    180f
+                } else {
+                    90f
+                }
+        } else {
+            binding.fab.rotation =
+                if (time.dMonths > System.currentTimeMillis().dMonths) {
+                    0f
+                } else if (time.dMonths < System.currentTimeMillis().dMonths) {
+                    180f
+                } else {
+                    90f
+                }
         }
     }
 }

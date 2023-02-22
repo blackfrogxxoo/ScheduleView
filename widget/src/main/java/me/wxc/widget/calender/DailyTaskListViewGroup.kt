@@ -8,7 +8,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISelectedTimeObserver
+import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.tools.dDays
@@ -18,7 +18,7 @@ import java.util.*
 
 class DailyTaskListViewGroup @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
-) : StableOrientationRecyclerView(context, attrs), ICalendarRender, ISelectedTimeObserver {
+) : StableOrientationRecyclerView(context, attrs), ICalendarRender, ISelectedDayTimeHolder {
     override val parentRender: ICalendarRender
         get() = parent as ICalendarRender
     override val calendar: Calendar = startOfDay()
@@ -26,10 +26,16 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
         get() = calendar.timeInMillis
     override val endTime: Long
         get() = calendar.timeInMillis + 7 * dayMills
-    override var selectedTime: Long = -1L
+    override var focusedDayTime: Long = -1L
         set(value) {
-            if (field == value) return
-            onSelectedTime(value)
+            if (value >= 0) {
+                val index = value.dDays - startTime.dDays
+                if (field == -1L) {
+                    scrollToPosition(index.toInt())
+                } else {
+                    smoothScrollToPosition(index.toInt())
+                }
+            }
             field = value
         }
     override var schedulerModels: List<ISchedulerModel> = listOf()
@@ -40,8 +46,16 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
             } else {
                 Adapter(startTime, schedulerModels)
             }
-            if (selectedTime != -1L) {
-                onSelectedTime(selectedTime)
+        }
+
+    override var selectedDayTime: Long
+        get() = SchedulerConfig.selectedDayTime
+        set(value) {
+            val index = value.dDays - startTime.dDays
+            if (focusedDayTime == -1L || focusedDayTime == value) {
+                scrollToPosition(index.toInt())
+            } else {
+                smoothScrollToPosition(index.toInt())
             }
         }
 
@@ -65,7 +79,7 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
                 if (position != -1 && lastPosition != position) {
                     lastPosition = position
                     if (dragged) {
-                        parentRender.selectedTime = startTime + position * dayMills
+                        parentRender.focusedDayTime = startTime + position * dayMills
                     }
                     dragged = false
                 }
@@ -76,20 +90,6 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
     override fun dispatchTouchEvent(e: MotionEvent): Boolean {
         parent.requestDisallowInterceptTouchEvent(true)
         return super.dispatchTouchEvent(e)
-    }
-
-    override fun onSelectedTime(time: Long) {
-        val index = time.dDays - startTime.dDays
-        if (selectedTime == -1L || selectedTime == time) {
-            scrollToPosition(index.toInt())
-        } else {
-            smoothScrollToPosition(index.toInt())
-        }
-        if (time != -1L) {
-            SchedulerConfig.onDateSelectedListener.invoke(startOfDay(startTime).apply {
-                add(Calendar.DAY_OF_WEEK, index.toInt())
-            })
-        }
     }
 
     class Adapter(

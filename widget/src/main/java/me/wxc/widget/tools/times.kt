@@ -21,12 +21,20 @@ val Long.hours: Int
     }
 val Long.dDays: Long
     get() = (startOfDay(this).timeInMillis - startOfDay().timeInMillis) / dayMills
+val Long.dMonths: Int
+    get() = (years - System.currentTimeMillis().years) * 12 + monthOfYear - System.currentTimeMillis().monthOfYear
 
 val Long.years: Int
     get() = run {
         Calendar.getInstance().apply {
             time = Date(this@run)
         }.get(Calendar.YEAR)
+    }
+val Long.monthOfYear: Int
+    get() = run {
+        Calendar.getInstance().apply {
+            time = Date(this@run)
+        }.get(Calendar.MONTH)
     }
 
 val Long.calendar: Calendar

@@ -152,9 +152,9 @@ class CreateTaskComponent(override var model: CreateTaskModel) :
                             top += movedY
                             bottom += movedY
                             // 即将超出屏幕时，滑动View
-                            if (left + 30f.dp < clockWidth) {
+                            if (left + (dayWidth / 3).coerceAtMost(50f.dp) < clockWidth) {
                                 model.onNeedScrollBlock(-dayWidth.roundToInt(), 0)
-                            } else if (left + width() - 30f.dp > parentWidth) {
+                            } else if (left + width() - (dayWidth / 3).coerceAtMost(50f.dp) > parentWidth) {
                                 model.onNeedScrollBlock(dayWidth.roundToInt(), 0)
                             }
                             if (distanceY > 0 && top - 50f.dp < zeroClockY) {

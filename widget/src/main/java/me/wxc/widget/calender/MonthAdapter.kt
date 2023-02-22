@@ -14,13 +14,31 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.SchedulerConfig.lifecycleScope
-import me.wxc.widget.base.ISelectedTimeObserver
+import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.tools.TAG
+import me.wxc.widget.tools.dMonths
 import me.wxc.widget.tools.startOfDay
 import java.util.Calendar
 
 class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapter<VH>(),
-    ISelectedTimeObserver {
+    ISelectedDayTimeHolder {
+
+    override var selectedDayTime: Long
+        get() = SchedulerConfig.selectedDayTime
+        set(value) {
+            val selectedDay = startOfDay(value)
+            val firstDay = startOfDay(SchedulerConfig.schedulerStartTime)
+            val position =
+                12 * (selectedDay.get(Calendar.YEAR) - firstDay.get(Calendar.YEAR)) + (selectedDay.get(
+                    Calendar.MONTH
+                ) - firstDay.get(Calendar.MONTH))
+            recyclerView.scrollToPosition(position)
+            recyclerView.descendants.filterIsInstance<ISelectedDayTimeHolder>()
+                .filter { (it as? View)?.isAttachedToWindow == true }
+                .forEach { baseRender ->
+                    baseRender.selectedDayTime = value
+                }
+        }
 
     private val monthCount: Int by lazy {
         val start = startOfDay(SchedulerConfig.schedulerStartTime)
@@ -35,7 +53,7 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
     init {
         recyclerView.run {
             post {
-                onSelectedTime()
+                selectedDayTime = SchedulerConfig.selectedDayTime
             }
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 private var lastPosition = -1
@@ -45,9 +63,14 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
                     val position = llm.findFirstCompletelyVisibleItemPosition()
                     if (position != -1 && lastPosition != position) {
                         lastPosition = position
-                        SchedulerConfig.onDateSelectedListener.invoke(startOfDay(SchedulerConfig.schedulerStartTime).apply {
+                        val calendar = startOfDay(SchedulerConfig.schedulerStartTime).apply {
                             add(Calendar.MONTH, position)
-                        })
+                        }
+                        if (calendar.timeInMillis.dMonths == System.currentTimeMillis().dMonths) {
+                            SchedulerConfig.onDateSelectedListener.invoke(startOfDay())
+                        } else {
+                            SchedulerConfig.onDateSelectedListener.invoke(calendar)
+                        }
                     }
                 }
             })
@@ -92,21 +115,6 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
                         Log.i(monthView.TAG, "$this")
                     }
                 }
-            }
-    }
-
-    override fun onSelectedTime(time: Long) {
-        val selectedDay = startOfDay(time)
-        val firstDay = startOfDay(SchedulerConfig.schedulerStartTime)
-        val position =
-            12 * (selectedDay.get(Calendar.YEAR) - firstDay.get(Calendar.YEAR)) + (selectedDay.get(
-                Calendar.MONTH
-            ) - firstDay.get(Calendar.MONTH))
-        recyclerView.scrollToPosition(position)
-        recyclerView.descendants.filterIsInstance<ISelectedTimeObserver>()
-            .filter { (it as? View)?.isAttachedToWindow == true }
-            .forEach { baseRender ->
-                baseRender.onSelectedTime(time)
             }
     }
 }

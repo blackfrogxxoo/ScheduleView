@@ -7,7 +7,7 @@ import android.graphics.RectF
 import android.util.SparseArray
 import android.view.MotionEvent
 
-interface ISchedulerWidget : ISelectedTimeObserver {
+interface ISchedulerWidget : ISelectedDayTimeHolder {
     val render: ISchedulerRender
     val renderRange: RenderRange
     fun onTouchEvent(motionEvent: MotionEvent): Boolean
@@ -68,7 +68,4 @@ interface ISchedulerEditable {
     val editingRect: RectF?
 }
 
-interface ISchedulerModel : java.io.Serializable {
-    val startTime: Long
-    val endTime: Long
-}
+interface ISchedulerModel : ITimeRangeHolder, java.io.Serializable

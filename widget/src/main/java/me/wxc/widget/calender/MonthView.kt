@@ -15,10 +15,10 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.updatePadding
 import me.wxc.widget.R
 import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISelectedTimeObserver
 import me.wxc.widget.base.ICalendarParent
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.math.roundToInt
@@ -27,10 +27,13 @@ import kotlin.properties.Delegates
 class MonthView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : ViewGroup(context, attrs, defStyleAttr), ICalendarRender, ICalendarParent,
-    ISelectedTimeObserver {
+    ISelectedDayTimeHolder {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = 11f.dp
-        typeface = Typeface.create(ResourcesCompat.getFont(context, R.font.product_sans_regular2), Typeface.NORMAL)
+        typeface = Typeface.create(
+            ResourcesCompat.getFont(context, R.font.product_sans_regular2),
+            Typeface.NORMAL
+        )
     }
     private lateinit var dailyTaskListViewGroup: DailyTaskListViewGroup
 
@@ -44,16 +47,23 @@ class MonthView @JvmOverloads constructor(
         get() = startOfDay(calendar.lastDayOfMonthTime).apply {
             set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY)
         }.timeInMillis
-    override var selectedTime: Long by Delegates.observable(-1L) { _, _, time ->
+    override var focusedDayTime: Long by Delegates.observable(-1L) { _, _, time ->
         collapseLine = if (time > 0) {
             ((time - startTime) / (7 * dayMills)).toInt()
         } else {
             -1
         }
         children.forEach {
-            it.selectedTime = time
+            it.focusedDayTime = time
         }
-        dailyTaskListViewGroup.selectedTime = time
+        dailyTaskListViewGroup.focusedDayTime = time
+        if (time != -1L) {
+            SchedulerConfig.onDateSelectedListener.invoke(startOfDay(time))
+        } else if (System.currentTimeMillis() in (startTime + 1) until endTime) {
+            SchedulerConfig.onDateSelectedListener.invoke(startOfDay())
+        } else {
+            SchedulerConfig.onDateSelectedListener.invoke(startOfDay(startTime))
+        }
     }
     override var schedulerModels: List<ISchedulerModel> = listOf()
         set(value) {
@@ -63,7 +73,11 @@ class MonthView @JvmOverloads constructor(
             }
             dailyTaskListViewGroup.schedulerModels = dailyTaskListViewGroup.schedulersFrom(value)
         }
-
+    override var selectedDayTime: Long
+        get() = SchedulerConfig.selectedDayTime
+        set(value) {
+            collapseLine = -1
+        }
     override val children: List<ICalendarRender>
         get() = _children.toList()
 
@@ -104,7 +118,13 @@ class MonthView @JvmOverloads constructor(
         }
         paint.color = SchedulerConfig.colorBlack4
         paint.strokeWidth = .5f.dp
-        canvas.drawLine(0f, paddingTop.toFloat(), measuredWidth.toFloat(), paddingTop.toFloat(), paint)
+        canvas.drawLine(
+            0f,
+            paddingTop.toFloat(),
+            measuredWidth.toFloat(),
+            paddingTop.toFloat(),
+            paint
+        )
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -213,10 +233,10 @@ class MonthView @JvmOverloads constructor(
                     _children.add(child)
                     addView(child)
                     child.setOnClickListener {
-                        if (selectedTime != child.startTime) {
-                            selectedTime = child.startTime
+                        focusedDayTime = if (focusedDayTime != child.startTime) {
+                            child.startTime
                         } else {
-                            selectedTime = -1
+                            -1
                         }
                     }
                     if (schedulerModels.any()) {
@@ -243,10 +263,15 @@ class MonthView @JvmOverloads constructor(
             }
             _children.clear()
         }
-        selectedTime = -1L
+        focusedDayTime = -1L
     }
 
-    override fun onSelectedTime(time: Long) {
-        collapseLine = -1
+    override fun onVisibilityChanged(changedView: View, visibility: Int) {
+        super.onVisibilityChanged(changedView, visibility)
+        if (changedView == parent && visibility == GONE) { // FIXME: 临时处理的日期选中状态
+            postDelayed({
+                focusedDayTime = -1L
+            }, 100)
+        }
     }
 }

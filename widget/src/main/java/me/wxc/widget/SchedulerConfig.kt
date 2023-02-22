@@ -42,7 +42,7 @@ object SchedulerConfig {
     var schedulerStartTime: Long = 0L
     var schedulerEndTime: Long = startOfDay().apply { add(Calendar.MONTH, 1200) }.timeInMillis
     var lifecycleScope: CoroutineScope = GlobalScope
-    var selectedTime: Long = System.currentTimeMillis()
+    var selectedDayTime: Long = System.currentTimeMillis()
     var onDateSelectedListener: Calendar.() -> Unit = {}
     var schedulerModelsProvider: suspend (startTime: Long, endTime: Long) -> List<ISchedulerModel> =
         { _, _ ->

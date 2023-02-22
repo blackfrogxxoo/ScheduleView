@@ -8,9 +8,9 @@ import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import me.wxc.widget.R
 import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISelectedTimeObserver
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.scheduler.components.DailyTaskModel
 import me.wxc.widget.tools.*
 import java.util.*
@@ -18,18 +18,21 @@ import kotlin.properties.Delegates
 
 class DayView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), ICalendarRender, ISelectedTimeObserver {
+) : View(context, attrs, defStyleAttr), ICalendarRender, ISelectedDayTimeHolder {
     override val parentRender: ICalendarRender
         get() = parent as ICalendarRender
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        typeface = Typeface.create(ResourcesCompat.getFont(context, R.font.product_sans_regular2), Typeface.NORMAL)
+        typeface = Typeface.create(
+            ResourcesCompat.getFont(context, R.font.product_sans_regular2),
+            Typeface.NORMAL
+        )
     }
     override val calendar: Calendar = startOfDay()
     override val startTime: Long
         get() = calendar.timeInMillis
     override val endTime: Long
         get() = calendar.timeInMillis + dayMills
-    override var selectedTime: Long by Delegates.observable(-1) { _, _, time ->
+    override var focusedDayTime: Long by Delegates.observable(-1) { _, _, time ->
         invalidate()
     }
     override var schedulerModels: List<ISchedulerModel> = listOf()
@@ -37,10 +40,10 @@ class DayView @JvmOverloads constructor(
             field = value
             invalidate()
         }
+    override var selectedDayTime: Long = SchedulerConfig.selectedDayTime
 
-
-    private val selected: Boolean
-        get() = selectedTime.dDays == startTime.dDays
+    private val focused: Boolean
+        get() = focusedDayTime.dDays == startTime.dDays
 
 
     private val pathEffect = DashPathEffect(floatArrayOf(1.5f.dp, 2.5f.dp), 0f)
@@ -89,12 +92,8 @@ class DayView @JvmOverloads constructor(
         drawArrow(canvas)
     }
 
-    override fun onSelectedTime(time: Long) {
-        selectedTime = -1
-    }
-
     private fun drawArrow(canvas: Canvas) {
-        if (selected) {
+        if (focused) {
             paint.color = SchedulerConfig.colorTransparent3
             canvas.drawRect(9f.dp, 27f.dp, canvas.width.toFloat(), canvas.height.toFloat(), paint)
             paint.style = Paint.Style.STROKE
@@ -162,9 +161,14 @@ class DayView @JvmOverloads constructor(
         val textY = 16f.dp
         val drawCircle: Boolean
         paint.color = if (startTime.dDays == System.currentTimeMillis().dDays) {
-            drawCircle = true
-            SchedulerConfig.colorBlue1
-        } else if (selected) {
+            if (focusedDayTime == -1L || focusedDayTime.dDays == startTime.dDays) {
+                drawCircle = true
+                SchedulerConfig.colorBlue1
+            } else {
+                drawCircle = false
+                SchedulerConfig.colorTransparent1
+            }
+        } else if (focused) {
             drawCircle = true
             SchedulerConfig.colorBlack4
         } else {
@@ -178,7 +182,11 @@ class DayView @JvmOverloads constructor(
         paint.textAlign = Paint.Align.CENTER
         paint.textSize = 13f.dp
         paint.color = if (startTime.dDays == System.currentTimeMillis().dDays) {
-            SchedulerConfig.colorWhite
+            if (drawCircle) {
+                SchedulerConfig.colorWhite
+            } else {
+                SchedulerConfig.colorBlue1
+            }
         } else if (startTime < parentRender.calendar.firstDayOfMonthTime || startTime > parentRender.calendar.lastDayOfMonthTime) {
             SchedulerConfig.colorBlack3
         } else {

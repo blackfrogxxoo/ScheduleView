@@ -1,9 +1,7 @@
 package me.wxc.widget.calender
 
 import android.content.Context
-import android.text.style.ImageSpan
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +9,6 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.core.text.buildSpannedString
 import androidx.core.text.color
-import androidx.core.text.inSpans
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import me.wxc.widget.R
@@ -26,8 +23,8 @@ import java.util.*
 class DailyTaskListView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs), ICalendarRender {
-    internal val recyclerView: RecyclerView
-    internal val emptyView: TextView
+    private val recyclerView: RecyclerView
+    private val emptyView: TextView
 
     override val parentRender: ICalendarRender
         get() = parent as ICalendarRender
@@ -36,7 +33,7 @@ class DailyTaskListView @JvmOverloads constructor(
         get() = calendar.timeInMillis
     override val endTime: Long
         get() = calendar.timeInMillis + dayMills
-    override var selectedTime: Long = -1L
+    override var focusedDayTime: Long = -1L
         set(value) {
             field = value
         }
@@ -66,7 +63,7 @@ class DailyTaskListView @JvmOverloads constructor(
         }
         emptyView.setOnClickListener {
             SchedulerConfig.onCreateTaskClickBlock(CreateTaskModel(
-                startTime = SchedulerConfig.selectedTime + 10 * hourMills,
+                startTime = SchedulerConfig.selectedDayTime + 10 * hourMills,
                 duration = quarterMills * 2,
                 onNeedScrollBlock = { _, _ -> }
             ))

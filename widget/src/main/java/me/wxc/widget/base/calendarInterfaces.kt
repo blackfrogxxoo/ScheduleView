@@ -2,12 +2,10 @@ package me.wxc.widget.base
 
 import java.util.Calendar
 
-interface ICalendarRender {
+interface ICalendarRender : ITimeRangeHolder {
     val parentRender: ICalendarRender?
     val calendar: Calendar
-    val startTime: Long
-    val endTime: Long
-    var selectedTime: Long
+    var focusedDayTime: Long
     var schedulerModels: List<ISchedulerModel>
 
     fun schedulersFrom(schedulerModels: List<ISchedulerModel>): List<ISchedulerModel> {
