@@ -9,9 +9,9 @@ val sdf_HHmm = SimpleDateFormat("HH:mm", Locale.ROOT)
 val sdf_yyyyMMddHHmmss = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
 val sdf_yyyyM = SimpleDateFormat("yyyy年M月")
 
-val quarterMills = 15 * 60 * 1000L
-val hourMills = 60 * 60 * 1000L
-val dayMills = 24 * hourMills
+val quarterMillis = 15 * 60 * 1000L
+val hourMillis = 60 * 60 * 1000L
+val dayMillis = 24 * hourMillis
 
 val Long.hours: Int
     get() = run {
@@ -20,7 +20,7 @@ val Long.hours: Int
         }.get(Calendar.HOUR_OF_DAY)
     }
 val Long.dDays: Long
-    get() = (startOfDay(this).timeInMillis - startOfDay().timeInMillis) / dayMills
+    get() = (startOfDay(this).timeInMillis - startOfDay().timeInMillis) / dayMillis
 val Long.dMonths: Int
     get() = (years - System.currentTimeMillis().years) * 12 + monthOfYear - System.currentTimeMillis().monthOfYear
 

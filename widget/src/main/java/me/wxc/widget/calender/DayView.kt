@@ -31,7 +31,7 @@ class DayView @JvmOverloads constructor(
     override val startTime: Long
         get() = calendar.timeInMillis
     override val endTime: Long
-        get() = calendar.timeInMillis + dayMills
+        get() = calendar.timeInMillis + dayMillis
     override var focusedDayTime: Long by Delegates.observable(-1) { _, _, time ->
         invalidate()
     }

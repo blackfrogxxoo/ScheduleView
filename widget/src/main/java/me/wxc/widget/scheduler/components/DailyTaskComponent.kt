@@ -125,7 +125,7 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
 data class DailyTaskModel(
     val id: Long = 0,
     override var startTime: Long = System.currentTimeMillis(),
-    var duration: Long = hourMills,
+    var duration: Long = hourMillis,
     var title: String,
 ) : ISchedulerModel {
     override val endTime: Long

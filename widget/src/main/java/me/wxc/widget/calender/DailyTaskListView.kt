@@ -2,6 +2,7 @@ package me.wxc.widget.calender
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,7 +33,7 @@ class DailyTaskListView @JvmOverloads constructor(
     override val startTime: Long
         get() = calendar.timeInMillis
     override val endTime: Long
-        get() = calendar.timeInMillis + dayMills
+        get() = calendar.timeInMillis + dayMillis
     override var focusedDayTime: Long = -1L
         set(value) {
             field = value
@@ -43,10 +44,11 @@ class DailyTaskListView @JvmOverloads constructor(
             if (value.any()) {
                 recyclerView.visibility = View.VISIBLE
                 emptyView.visibility = View.GONE
-                recyclerView.adapter = Adapter(value)
+                recyclerView.adapter = Adapter()
             } else {
                 recyclerView.visibility = View.GONE
                 emptyView.visibility = View.VISIBLE
+                recyclerView.adapter = null
             }
         }
 
@@ -63,17 +65,14 @@ class DailyTaskListView @JvmOverloads constructor(
         }
         emptyView.setOnClickListener {
             SchedulerConfig.onCreateTaskClickBlock(CreateTaskModel(
-                startTime = SchedulerConfig.selectedDayTime + 10 * hourMills,
-                duration = quarterMills * 2,
+                startTime = SchedulerConfig.selectedDayTime + 10 * hourMillis,
+                duration = quarterMillis * 2,
                 onNeedScrollBlock = { _, _ -> }
             ))
         }
     }
 
-    class Adapter(private val schedulerModels: List<ISchedulerModel>) :
-        RecyclerView.Adapter<ViewHolder>() {
-        private val TYPE_TASK = 0
-        private val TYPE_NOW_LINE = 1
+    inner class Adapter : RecyclerView.Adapter<ViewHolder>() {
         private var nowLineIndex = -1
         private var size = 0
 
@@ -149,4 +148,9 @@ class DailyTaskListView @JvmOverloads constructor(
     }
 
     class NowLineVH(context: Context) : ViewHolder(NowLineView(context))
+
+    private companion object {
+        private const val TYPE_TASK = 0
+        private const val TYPE_NOW_LINE = 1
+    }
 }

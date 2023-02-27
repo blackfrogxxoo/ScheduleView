@@ -28,8 +28,8 @@ fun ISchedulerComponent<*>.refreshRect() {
     val left = clockWidth + (day - today) * dayWidth
     val right = left + dayWidth
     val zeroClock = startOfDay(model.startTime)
-    val top = dateLineHeight + dayHeight * (model.startTime - zeroClock.time.time) / (hourMills * 24)
-    val bottom = dateLineHeight + dayHeight * (model.endTime - zeroClock.time.time) / (hourMills * 24)
+    val top = dateLineHeight + dayHeight * (model.startTime - zeroClock.time.time) / (hourMillis * 24)
+    val bottom = dateLineHeight + dayHeight * (model.endTime - zeroClock.time.time) / (hourMillis * 24)
     originRect.set(left, top, right, bottom)
 }
 
@@ -41,8 +41,8 @@ fun ISchedulerModel.originRect(): RectF {
     val left = clockWidth + (day - today) * dayWidth
     val right = left + dayWidth
     val zeroClock = startOfDay(startTime)
-    val top = dateLineHeight + dayHeight * (startTime - zeroClock.time.time) / (hourMills * 24)
-    val bottom = dateLineHeight + dayHeight * (endTime - zeroClock.time.time) / (hourMills * 24)
+    val top = dateLineHeight + dayHeight * (startTime - zeroClock.time.time) / (hourMillis * 24)
+    val bottom = dateLineHeight + dayHeight * (endTime - zeroClock.time.time) / (hourMillis * 24)
     return RectF(left, top, right, bottom)
 }
 
@@ -50,15 +50,15 @@ fun ISchedulerComponent<*>.originRect(): RectF = model.originRect()
 
 fun Point.positionToTime(scrollX: Int = 0, scrollY: Int = 0): Long {
     val days = ((x - clockWidth + scrollX) / dayWidth).roundToInt()
-    val mills = ((y - dateLineHeight + scrollY) * hourMills / clockHeight).roundToLong()
+    val millis = ((y - dateLineHeight + scrollY) * hourMillis / clockHeight).roundToLong()
     val calendar = startOfDay().apply {
         add(Calendar.DAY_OF_YEAR, days)
     }
-    return calendar.timeInMillis + mills
+    return calendar.timeInMillis + millis
 }
 
-val Float.yToMills: Long
-    get() = (this * hourMills / clockHeight).roundToLong()
+val Float.yToMillis: Long
+    get() = (this * hourMillis / clockHeight).roundToLong()
 
 val Float.xToDDays: Int
     get() = ((this - clockWidth) / dayWidth).roundToInt()

@@ -19,7 +19,6 @@ import me.wxc.widget.base.ISchedulerWidget.Companion.TAG
 import me.wxc.widget.scheduler.components.CreateTaskComponent
 import me.wxc.widget.scheduler.components.DailyTaskComponent
 import me.wxc.widget.tools.*
-import java.util.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
@@ -50,7 +49,7 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
             (render as? ISchedulerTaskCreator)?.removeCreateTask()
             scrollTo((dayWidth * value.dDays).roundToInt(), initializedY())
         }
-        get() = startOfDay().timeInMillis + dDays * dayMills
+        get() = startOfDay().timeInMillis + dDays * dayMillis
 
     private val dDays: Int
         get() = (scrollX / dayWidth).toInt()
@@ -290,10 +289,10 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
     }
 
     private fun initializedY() = run {
-        val mills = System.currentTimeMillis() - startOfDay().timeInMillis
-        val centerMills =
-            ((render as View).height / 2 - zeroClockY / 2 - (render as View).paddingTop) * hourMills / clockHeight
-        ((mills - centerMills) * clockHeight / hourMills).toInt().coerceAtMost(MAX_SCROLL_Y)
+        val millis = System.currentTimeMillis() - startOfDay().timeInMillis
+        val centerMillis =
+            ((render as View).height / 2 - zeroClockY / 2 - (render as View).paddingTop) * hourMillis / clockHeight
+        ((millis - centerMillis) * clockHeight / hourMillis).toInt().coerceAtMost(MAX_SCROLL_Y)
             .coerceAtLeast(MIN_SCROLL_Y)
     }
 

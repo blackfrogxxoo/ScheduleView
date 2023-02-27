@@ -51,19 +51,19 @@ class ClockLineComponent(override var model: ClockLineModel) : ISchedulerCompone
             val endTime = it.draggingRect?.bottomPoint()
                 ?.positionToTime(scrollX = -anchorPoint.x, scrollY = -anchorPoint.y) ?: it.endTime
             val adjustedStartTime = startTime.adjustTimeInDay(
-                quarterMills, true
+                quarterMillis, true
             )
             val adjustedEndTime = endTime.adjustTimeInDay(
-                quarterMills, true
+                quarterMillis, true
             )
             val createTop =
                 drawingRect.top + dayHeight * (adjustedStartTime - startOfDay(adjustedStartTime).timeInMillis - model.startTime + startOfDay(
                     model.startTime
-                ).timeInMillis) / (hourMills * 24)
+                ).timeInMillis) / (hourMillis * 24)
             val createBottom =
                 drawingRect.top + dayHeight * (adjustedEndTime - startOfDay(adjustedEndTime).timeInMillis - model.startTime + startOfDay(
                     model.startTime
-                ).timeInMillis) / (hourMills * 24)
+                ).timeInMillis) / (hourMillis * 24)
             paint.color = SchedulerConfig.colorBlue1
             if (createTop >= drawingRect.top && createTop < drawingRect.bottom && model.clock != 24) {
                 canvas.drawText(adjustedStartTime.hhMM, startX, createTop + 4f.dp, paint)
@@ -89,8 +89,8 @@ data class ClockLineModel(
     var createTaskModel: CreateTaskModel? = null
 ) : ISchedulerModel {
     private val zeroClock = startOfDay()
-    override val startTime: Long = zeroClock.timeInMillis + clock * hourMills
-    override val endTime: Long = zeroClock.timeInMillis + (clock + 1) * hourMills
+    override val startTime: Long = zeroClock.timeInMillis + clock * hourMillis
+    override val endTime: Long = zeroClock.timeInMillis + (clock + 1) * hourMillis
     val showText: String
         get() = if (clock == 24) "24:00" else startTime.hhMM
 }

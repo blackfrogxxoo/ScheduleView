@@ -224,11 +224,11 @@ class CreateTaskComponent(override var model: CreateTaskModel) :
                             scrollY = -anchorPoint.y
                         ) - startTime
                     }
-                    startTime = startTime.adjustTimeInDay(quarterMills, true)
-                    duration = duration.adjustTimeSelf(quarterMills, true)
+                    startTime = startTime.adjustTimeInDay(quarterMillis, true)
+                    duration = duration.adjustTimeSelf(quarterMillis, true)
                     Log.i(
                         TAG,
-                        "updated task: ${sdf_yyyyMMddHHmmss.format(startTime)}, ${1f * duration / hourMills}"
+                        "updated task: ${sdf_yyyyMMddHHmmss.format(startTime)}, ${1f * duration / hourMillis}"
                     )
                     draggingRect = null
                     refreshRect()
@@ -242,7 +242,7 @@ class CreateTaskComponent(override var model: CreateTaskModel) :
 
 data class CreateTaskModel(
     override var startTime: Long = System.currentTimeMillis(),
-    var duration: Long = hourMills / 2,
+    var duration: Long = hourMillis / 2,
     var title: String = "",
     var draggingRect: RectF? = null,
     var state: State = State.IDLE,

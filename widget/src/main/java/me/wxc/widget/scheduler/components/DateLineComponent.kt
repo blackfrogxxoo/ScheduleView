@@ -38,7 +38,7 @@ class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent
         var x = -dayWidth
         while (x >= -dayWidth && x < parentWidth) {
             val startX = (x + scrollX).roundToInt() / dayWidth.roundToInt() * dayWidth + clockWidth
-            val startTime = startOfDay().timeInMillis + startX.xToDDays * dayMills
+            val startTime = startOfDay().timeInMillis + startX.xToDDays * dayMillis
             val dDays = startX.xToDDays - System.currentTimeMillis().dDays
             paint.color = if (dDays == 0L) {
                 SchedulerConfig.colorBlue1

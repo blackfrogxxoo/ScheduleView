@@ -8,8 +8,8 @@ interface ICalendarRender : ITimeRangeHolder {
     var focusedDayTime: Long
     var schedulerModels: List<ISchedulerModel>
 
-    fun schedulersFrom(schedulerModels: List<ISchedulerModel>): List<ISchedulerModel> {
-        return schedulerModels.filter { it.startTime >= startTime && it.endTime <= endTime }
+    fun getSchedulersFrom(from: List<ISchedulerModel>) {
+        schedulerModels = from.filter { it.startTime >= startTime && it.endTime <= endTime }
             .sortedBy { it.startTime }
     }
 }

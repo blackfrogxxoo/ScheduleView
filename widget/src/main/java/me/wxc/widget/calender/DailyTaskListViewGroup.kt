@@ -2,17 +2,18 @@ package me.wxc.widget.calender
 
 import android.content.Context
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.tools.dDays
-import me.wxc.widget.tools.dayMills
+import me.wxc.widget.tools.dayMillis
 import me.wxc.widget.tools.startOfDay
 import java.util.*
 
@@ -25,7 +26,7 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
     override val startTime: Long
         get() = calendar.timeInMillis
     override val endTime: Long
-        get() = calendar.timeInMillis + 7 * dayMills
+        get() = calendar.timeInMillis + 7 * dayMillis
     override var focusedDayTime: Long = -1L
         set(value) {
             if (value >= 0) {
@@ -44,7 +45,7 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
             adapter = if (startTime == -1L) {
                 null
             } else {
-                Adapter(startTime, schedulerModels)
+                Adapter(schedulerModels)
             }
         }
 
@@ -79,7 +80,7 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
                 if (position != -1 && lastPosition != position) {
                     lastPosition = position
                     if (dragged) {
-                        parentRender.focusedDayTime = startTime + position * dayMills
+                        parentRender.focusedDayTime = startTime + position * dayMillis
                     }
                     dragged = false
                 }
@@ -92,10 +93,7 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
         return super.dispatchTouchEvent(e)
     }
 
-    class Adapter(
-        private val startTime: Long,
-        private var schedulerModels: List<ISchedulerModel>
-    ) : RecyclerView.Adapter<VH>() {
+    inner class Adapter(private val schedulerModels: List<ISchedulerModel>) : RecyclerView.Adapter<VH>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             return VH(DailyTaskListView(parent.context).apply {
                 layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
@@ -105,12 +103,9 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
         override fun getItemCount() = 7
 
         override fun onBindViewHolder(holder: VH, position: Int) {
-            val from = startTime + position * dayMills
-            val to = from + dayMills
-            schedulerModels.filter { it.startTime >= from && it.endTime <= to }.run {
-                holder.dailyTaskListView.calendar.timeInMillis = from
-                holder.dailyTaskListView.schedulerModels = this
-            }
+            val from = startTime + position * dayMillis
+            holder.dailyTaskListView.calendar.timeInMillis = from
+            holder.dailyTaskListView.getSchedulersFrom(schedulerModels)
         }
 
 

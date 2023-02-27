@@ -51,7 +51,7 @@ class MonthView @JvmOverloads constructor(
         }.timeInMillis
     override var focusedDayTime: Long by Delegates.observable(-1L) { _, _, time ->
         collapseLine = if (time > 0) {
-            ((time - startTime) / (7 * dayMills)).toInt()
+            ((time - startTime) / (7 * dayMillis)).toInt()
         } else {
             -1
         }
@@ -73,9 +73,9 @@ class MonthView @JvmOverloads constructor(
         set(value) {
             field = value
             _children.forEach { child ->
-                child.schedulerModels = child.schedulersFrom(value)
+                child.getSchedulersFrom(value)
             }
-            dailyTaskListViewGroup.schedulerModels = dailyTaskListViewGroup.schedulersFrom(value)
+            dailyTaskListViewGroup.getSchedulersFrom(value)
         }
     override var selectedDayTime: Long
         get() = SchedulerConfig.selectedDayTime
@@ -123,7 +123,7 @@ class MonthView @JvmOverloads constructor(
                 -1
             }
         for (i in 0 until 7) {
-            val time = startTime + i * dayMills
+            val time = startTime + i * dayMillis
             val left = 10f.dp + i * dayWidth
             if (todayWeekDayIndex == i) {
                 paint.color = SchedulerConfig.colorBlue1
@@ -180,8 +180,8 @@ class MonthView @JvmOverloads constructor(
     private fun onCollapseLineChanged(old: Int, new: Int, doOnEnd: () -> Unit = {}) {
         Log.i(TAG, "onCollapseLineChanged: $old, $new")
         if (old == -1 && new >= 0) {
-            dailyTaskListViewGroup.calendar.timeInMillis = startTime + new * 7 * dayMills
-            dailyTaskListViewGroup.schedulerModels = schedulersFrom(schedulerModels)
+            dailyTaskListViewGroup.calendar.timeInMillis = startTime + new * 7 * dayMillis
+            dailyTaskListViewGroup.getSchedulersFrom(schedulerModels)
             collapseCenter = paddingTop + (new + 1) * dayHeight
             val destTop = paddingTop + dayHeight
             val destBottom = if (new < _children.size / 7 - 1) {
@@ -244,7 +244,7 @@ class MonthView @JvmOverloads constructor(
             }"
         )
         if (_children.isEmpty()) {
-            for (time in startTime..endTime step dayMills) {
+            for (time in startTime..endTime step dayMillis) {
                 DayView(context).let { child ->
                     child.calendar.timeInMillis = time
                     _children.add(child)
@@ -257,7 +257,7 @@ class MonthView @JvmOverloads constructor(
                         }
                     }
                     if (schedulerModels.any()) {
-                        child.schedulerModels = child.schedulersFrom(schedulerModels)
+                        child.getSchedulersFrom(schedulerModels)
                     }
                 }
             }

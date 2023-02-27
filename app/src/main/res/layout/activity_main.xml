@@ -18,15 +18,29 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="2023年2月" />
 
+    <TextView
+        android:id="@+id/today"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:text="今天"
+        android:padding="8dp"
+        android:textColor="@color/black1"
+        android:textSize="14sp"
+        android:fontFamily="@font/product_sans_bold3"
+        app:layout_constraintBottom_toBottomOf="@id/more"
+        app:layout_constraintEnd_toStartOf="@id/more"
+        app:layout_constraintTop_toTopOf="@id/more" />
+
     <ImageView
         android:id="@+id/more"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:src="@android:drawable/ic_menu_more"
         android:layout_marginTop="15dp"
         android:layout_marginEnd="15dp"
+        android:src="@android:drawable/ic_menu_my_calendar"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <me.wxc.widget.scheduler.SchedulerView
         android:id="@+id/scheduler_view"
@@ -39,12 +53,12 @@
         android:id="@+id/monthViewList"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/yyyy_m"
         android:layout_marginTop="12dp"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         android:orientation="horizontal"
-        android:visibility="gone"/>
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/yyyy_m" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
@@ -53,9 +67,8 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="16dp"
-        android:rotation="90"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@mipmap/ic_left_arrow" />
+        app:srcCompat="@android:drawable/ic_input_add" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -56,8 +56,8 @@ class SchedulerView @JvmOverloads constructor(
             startTime = PointF(motionEvent.x - dayWidth / 2, motionEvent.y)
                 .toPoint()
                 .positionToTime(-calendarPosition.x, -calendarPosition.y)
-                .adjustTimeInDay(quarterMills, true),
-            duration = hourMills / 2,
+                .adjustTimeInDay(quarterMillis, true),
+            duration = hourMillis / 2,
             title = "",
         ) { x, y ->
             if (!widget.isScrolling()) {
