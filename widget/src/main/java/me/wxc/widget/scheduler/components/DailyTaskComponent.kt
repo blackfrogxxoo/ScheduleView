@@ -5,6 +5,7 @@ import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ISchedulerComponent
 import me.wxc.widget.base.ISchedulerEditable
 import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.tools.*
 
 class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerComponent<DailyTaskModel>,
@@ -127,6 +128,8 @@ data class DailyTaskModel(
     override var startTime: Long = System.currentTimeMillis(),
     var duration: Long = hourMillis,
     var title: String,
+    var repeatId: String,
+    var repeatMode: RepeatMode = RepeatMode.Never
 ) : ISchedulerModel {
     override val endTime: Long
         get() = startTime + duration

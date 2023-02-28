@@ -4,6 +4,7 @@ import android.graphics.*
 import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ISchedulerComponent
 import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.scheduler.SchedulerWidget
 import me.wxc.widget.tools.*
 import kotlin.math.roundToInt
 
@@ -32,6 +33,7 @@ class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent
     }
 
     override fun onDraw(canvas: Canvas, paint: Paint) {
+        if (!SchedulerWidget.isThreeDay) return
         parentWidth = canvas.width
         canvas.save()
         canvas.clipRect(drawingRect)

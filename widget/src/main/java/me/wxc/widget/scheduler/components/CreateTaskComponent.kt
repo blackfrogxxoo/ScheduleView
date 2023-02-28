@@ -8,6 +8,7 @@ import me.wxc.widget.base.ISchedulerComponent
 import me.wxc.widget.base.ISchedulerComponent.Companion.TAG
 import me.wxc.widget.base.ISchedulerEditable
 import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.tools.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -246,6 +247,7 @@ data class CreateTaskModel(
     var title: String = "",
     var draggingRect: RectF? = null,
     var state: State = State.IDLE,
+    var repeatMode: RepeatMode = RepeatMode.Never,
     val onNeedScrollBlock: (x: Int, y: Int) -> Unit
 ) : ISchedulerModel {
     override val endTime: Long

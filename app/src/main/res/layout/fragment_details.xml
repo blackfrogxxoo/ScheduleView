@@ -52,6 +52,17 @@
         tools:text="2月3日\n10:00 周一" />
 
     <TextView
+        android:id="@+id/repeatMode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:textColor="@color/black1"
+        android:textSize="16sp"
+        tools:text="重复： 永不"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/startTime"/>
+
+    <TextView
         android:id="@+id/save"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -63,7 +74,7 @@
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/startTime" />
+        app:layout_constraintTop_toBottomOf="@id/repeatMode" />
 
     <TextView
         android:id="@+id/delete"

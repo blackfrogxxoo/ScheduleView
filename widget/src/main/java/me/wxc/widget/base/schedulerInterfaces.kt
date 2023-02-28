@@ -4,8 +4,8 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Point
 import android.graphics.RectF
-import android.util.SparseArray
 import android.view.MotionEvent
+import me.wxc.widget.scheduler.components.CreateTaskComponent
 
 interface ISchedulerWidget : ISelectedDayTimeHolder {
     val render: ISchedulerRender
@@ -54,8 +54,10 @@ interface ISchedulerComponent<T : ISchedulerModel> {
 
 interface ISchedulerRenderAdapter {
     var models: MutableList<ISchedulerModel>
-    var modelsGroupByMonth: SparseArray<MutableList<ISchedulerModel>>
-    val visibleComponents: List<ISchedulerComponent<*>>
+    val modelsGroupByDay: MutableMap<Int, List<ISchedulerModel>>
+    val fixedComponents: List<ISchedulerComponent<*>>
+    val visibleComponent: List<ISchedulerComponent<*>>
+    var createTaskComponent: CreateTaskComponent?
     fun onCreateComponent(model: ISchedulerModel): ISchedulerComponent<*>?
     fun notifyModelsChanged()
     fun notifyModelAdded(model: ISchedulerModel)

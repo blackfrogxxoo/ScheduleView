@@ -10,4 +10,7 @@ data class DailyTaskLocal(
     val startTime: Long,
     val endTime: Long,
     val title: String,
+    val repeatId: String,
+    val repeatType: Int = 0,
+    val repeatInterval: Int = 0,
 )

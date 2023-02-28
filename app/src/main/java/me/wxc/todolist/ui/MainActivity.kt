@@ -15,6 +15,7 @@ import me.wxc.todolist.R
 import me.wxc.todolist.databinding.ActivityMainBinding
 import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ISchedulerWidget
+import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.calender.MonthAdapter
 import me.wxc.widget.scheduler.SchedulerWidget
 import me.wxc.widget.scheduler.components.CreateTaskModel
@@ -130,7 +131,11 @@ class MainActivity : AppCompatActivity() {
                                 it as DailyTaskModel,
                                 binding.schedulerView.adapter.models
                             )
-                            binding.schedulerView.adapter.notifyModelRemoved(model)
+                            if (model.repeatMode == RepeatMode.Never) {
+                                binding.schedulerView.adapter.notifyModelRemoved(model)
+                            } else {
+                                binding.schedulerView.adapter.notifyModelsChanged()
+                            }
                             binding.schedulerView.invalidate()
                             monthAdapter.refreshCurrentItem()
                         }
@@ -146,6 +151,7 @@ class MainActivity : AppCompatActivity() {
                                 it as CreateTaskModel,
                                 binding.schedulerView.adapter.models
                             )
+                            binding.schedulerView.removeCreateTask()
                             binding.schedulerView.adapter.notifyModelsChanged()
                             Log.i(TAG, "daily task added: ${model.title}")
                             binding.schedulerView.invalidate()

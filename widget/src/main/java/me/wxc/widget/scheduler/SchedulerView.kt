@@ -24,7 +24,10 @@ class SchedulerView @JvmOverloads constructor(
     }
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        typeface = Typeface.create(ResourcesCompat.getFont(context, R.font.product_sans_regular2), Typeface.NORMAL)
+        typeface = Typeface.create(
+            ResourcesCompat.getFont(context, R.font.product_sans_regular2),
+            Typeface.NORMAL
+        )
     }
     override lateinit var widget: ISchedulerWidget
     override val calendarPosition: Point = Point()
@@ -38,12 +41,32 @@ class SchedulerView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        adapter.visibleComponents.forEach {
+        val time = System.currentTimeMillis()
+        adapter.fixedComponents.forEach {
             it.updateDrawingRect(calendarPosition)
             if (it.drawingRect.ifVisible(this) || it is CreateTaskComponent || it is DateLineComponent) {
                 it.onDraw(canvas, paint)
             }
         }
+        val start = -(calendarPosition.x / dayWidth).toInt() - 1
+        val end = start + 1 + (width / dayWidth).toInt()
+        (adapter as ThreeDayAdapter).modelsGroupByDay
+            .filterKeys { it in start..end }.flatMap { it.value }
+            .map { adapter.onCreateComponent(it) }
+            .apply {
+                adapter.visibleComponent = this
+                Log.i(TAG, "onDraw size: $size")
+            }.forEach {
+                it.updateDrawingRect(calendarPosition)
+                if (it.drawingRect.ifVisible(this) || it is CreateTaskComponent || it is DateLineComponent) {
+                    it.onDraw(canvas, paint)
+                }
+            }
+        adapter.createTaskComponent?.let {
+            it.updateDrawingRect(calendarPosition)
+            it.onDraw(canvas, paint)
+        }
+        Log.i(TAG, "onDraw cost time: ${System.currentTimeMillis() - time}")
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -51,7 +74,7 @@ class SchedulerView @JvmOverloads constructor(
     }
 
     override fun addCreateTask(motionEvent: MotionEvent): Boolean {
-        if (adapter.models.any { it is CreateTaskModel }) return false
+        if (adapter.createTaskComponent != null) return false
         val model = CreateTaskModel(
             startTime = PointF(motionEvent.x - dayWidth / 2, motionEvent.y)
                 .toPoint()
@@ -72,75 +95,81 @@ class SchedulerView @JvmOverloads constructor(
                 it.createTaskModel = this
             }
         }
-        adapter.models.add(model)
-        adapter.notifyModelAdded(model)
+        adapter.createTaskComponent = adapter.onCreateComponent(model) as CreateTaskComponent
         return true
     }
 
     override fun removeCreateTask(): Boolean {
-        val model = adapter.models.find { it is CreateTaskModel }
-        model?.let {
-            adapter.models.remove(it)
-            adapter.models.filterIsInstance<ClockLineModel>().forEach {
-                it.createTaskModel = null
-            }
-            adapter.notifyModelRemoved(it)
-            return true
-        }
-        return false
+        adapter.createTaskComponent = null
+        return true
     }
 }
 
 class ThreeDayAdapter : ISchedulerRenderAdapter {
-    override var models: MutableList<ISchedulerModel> = mutableListOf<ISchedulerModel>().apply {
-        for (i in 0..24) {
-            add(ClockLineModel(i))
-        }
-        add(DateLineModel)
-        add(NowLineModel)
-    }
-    override var modelsGroupByMonth: SparseArray<MutableList<ISchedulerModel>> = SparseArray()
+    override var models: MutableList<ISchedulerModel> = mutableListOf()
+    override var modelsGroupByDay = mutableMapOf<Int, List<ISchedulerModel>>()
+    override var visibleComponent: List<ISchedulerComponent<*>> = listOf()
+    override var createTaskComponent: CreateTaskComponent? = null
+    override val fixedComponents: List<ISchedulerComponent<*>> =
+        mutableListOf<ISchedulerComponent<*>>().apply {
+            for (i in 0..24) {
+                add(ClockLineComponent(ClockLineModel(i)))
+            }
+            add(DateLineComponent(DateLineModel))
+            add(WeekLineComponent(WeekLineModel))
+            add(NowLineComponent(NowLineModel))
+        }.toList()
 
-    private var _visibleComponents: List<ISchedulerComponent<*>> = listOf()
-    override val visibleComponents: List<ISchedulerComponent<*>>
-        get() = _visibleComponents
+    private val _taskComponentCache = SparseArray<ISchedulerComponent<*>>()
 
-    override fun onCreateComponent(model: ISchedulerModel): ISchedulerComponent<*>? {
+    override fun onCreateComponent(model: ISchedulerModel): ISchedulerComponent<*> {
         // TODO 引入对象缓存机制
         return when (model) {
-            is ClockLineModel -> ClockLineComponent(model)
-            is DateLineModel -> if (SchedulerWidget.isThreeDay) DateLineComponent(model) else WeekLineComponent(
-                WeekLineModel
-            )
-            is CreateTaskModel -> CreateTaskComponent(model)
-            is DailyTaskModel -> DailyTaskComponent(model)
-            is NowLineModel -> NowLineComponent(model)
-            else -> null
+            is CreateTaskModel -> createTaskComponent ?: run {
+                CreateTaskComponent(model).apply { createTaskComponent = this }
+            }
+            is DailyTaskModel -> _taskComponentCache.get(model.id.toInt()) ?: DailyTaskComponent(
+                model
+            ).apply {
+                _taskComponentCache.append(model.id.toInt(), this)
+                Log.i("SchedulerView", "create component: $this")
+            }
+            else -> throw IllegalArgumentException("invalid model: $model")
         }
     }
 
     override fun notifyModelsChanged() {
-        _visibleComponents = models.mapNotNull { onCreateComponent(it) }.sortComponent()
+        _taskComponentCache.clear()
+        modelsGroupByDay = models.groupBy {
+            it.startTime.dDays.toInt()
+        }.toMutableMap()
     }
 
     override fun notifyModelAdded(model: ISchedulerModel) {
-        _visibleComponents = _visibleComponents.toMutableList().apply {
-            onCreateComponent(model)?.let { add(it) }
-        }.sortComponent()
+        val key = model.startTime.dDays.toInt()
+        modelsGroupByDay[key] = modelsGroupByDay
+            .getOrPut(key) { emptyList() }
+            .toMutableList()
+            .apply { add(model) }
+            .toList()
     }
 
-    private fun List<ISchedulerComponent<*>>.sortComponent(): List<ISchedulerComponent<*>> = sortedBy {
-        when (it) {
-            is NowLineComponent -> 1
-            is DateLineComponent -> 2
-            is WeekLineComponent -> 2
-            else -> 0
+    private fun List<ISchedulerComponent<*>>.sortComponent(): List<ISchedulerComponent<*>> =
+        sortedBy {
+            when (it) {
+                is NowLineComponent -> 1
+                is DateLineComponent -> 2
+                is WeekLineComponent -> 2
+                else -> 0
+            }
         }
-    }
 
     override fun notifyModelRemoved(model: ISchedulerModel) {
-        _visibleComponents = _visibleComponents.toMutableList().filterNot {
-            it.model == model
-        }.toList()
+        val key = model.startTime.dDays.toInt()
+        modelsGroupByDay[key] = modelsGroupByDay
+            .getOrPut(key) { emptyList() }
+            .toMutableList()
+            .apply { remove(model) }
+            .toList()
     }
 }

@@ -4,8 +4,9 @@ import android.graphics.*
 import me.wxc.widget.SchedulerConfig
 import me.wxc.widget.base.ISchedulerComponent
 import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.scheduler.SchedulerWidget
 import me.wxc.widget.tools.*
-import java.util.Calendar
+import java.util.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -37,6 +38,7 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
     }
 
     override fun onDraw(canvas: Canvas, paint: Paint) {
+        if (SchedulerWidget.isThreeDay) return
         parentWidth = canvas.width
         canvas.save()
         canvas.clipRect(drawingRect)
@@ -49,7 +51,8 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
         while (x >= clockWidth && x < parentWidth) {
             val dDays = calendar.timeInMillis.dDays
             val centerX = x + dayWidth / 2
-            val selected = calendar.timeInMillis.dDays.toInt() == (parentScrollX + clockWidth).xToDDays
+            val selected =
+                calendar.timeInMillis.dDays.toInt() == (parentScrollX + clockWidth).xToDDays
             if (selected) {
                 paint.color = if (dDays != 0L) {
                     SchedulerConfig.colorBlack4

@@ -18,6 +18,12 @@ interface DailyTaskDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun putDailyTask(task: DailyTaskLocal) : Long
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun putDailyTasks(task: List<DailyTaskLocal>) : List<Long>
+
     @Query("DELETE FROM daily_task WHERE id = :id")
     fun removeById(id: Long)
+
+    @Query("DELETE FROM daily_task WHERE repeatId = :id")
+    fun removeByRepeatId(id: String)
 }

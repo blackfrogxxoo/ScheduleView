@@ -3,7 +3,10 @@ package me.wxc.todolist.ui
 import android.app.Dialog
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.widget.doOnTextChanged
 import com.bigkoo.pickerview.R
@@ -12,6 +15,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import me.wxc.todolist.databinding.FragmentDetailsBinding
 import me.wxc.todolist.tools.argument
 import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.scheduler.components.CreateTaskModel
 import me.wxc.widget.scheduler.components.DailyTaskModel
 import me.wxc.widget.tools.TAG
@@ -88,6 +92,7 @@ class DetailsFragment : BottomSheetDialogFragment() {
             (taskModel as? CreateTaskModel)?.title = text?.toString() ?: "(无主题)"
             (taskModel as? DailyTaskModel)?.title = text?.toString() ?: "(无主题)"
         }
+        binding.repeatMode.text = "重复：${taskModel.repeatMode.name}"
         binding.startTime.text = sdf.format(taskModel.startTime)
         binding.endTime.text = sdf.format(taskModel.endTime)
         binding.startTime.setOnClickListener {
@@ -110,5 +115,18 @@ class DetailsFragment : BottomSheetDialogFragment() {
             onDeleteBlock.invoke(taskModel)
             dismissAllowingStateLoss()
         }
+        binding.repeatMode.setOnClickListener {
+            RepeatModeFragment.show(
+                this,
+                taskModel.repeatMode,
+            ) {
+                (taskModel as? CreateTaskModel)?.repeatMode = it
+                binding.repeatMode.text = "重复：${taskModel.repeatMode.name}"
+            }
+        }
     }
+
+    private val ISchedulerModel.repeatMode: RepeatMode
+        get() = (this as? DailyTaskModel)?.repeatMode ?: (this as? CreateTaskModel)?.repeatMode
+        ?: RepeatMode.Never
 }

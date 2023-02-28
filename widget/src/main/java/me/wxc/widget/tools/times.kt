@@ -43,6 +43,9 @@ val Long.calendar: Calendar
 val Long.dayOfMonth: Int
     get() = calendar.get(Calendar.DAY_OF_MONTH)
 
+val Long.dayOfYear: Int
+    get() = calendar.get(Calendar.DAY_OF_YEAR)
+
 val Long.dayOfWeekText: String
     get() = run {
         when (calendar.get(Calendar.DAY_OF_WEEK)) {

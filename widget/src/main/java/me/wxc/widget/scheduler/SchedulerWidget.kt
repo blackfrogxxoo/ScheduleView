@@ -112,7 +112,7 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
                 override fun onSingleTapUp(e: MotionEvent): Boolean {
                     Log.i(TAG, "onSingleTapUp: ${e.action}")
                     val clickedTask =
-                        render.adapter.visibleComponents.mapNotNull { it as? DailyTaskComponent }
+                        render.adapter.visibleComponent.mapNotNull { it as? DailyTaskComponent }
                             .find { e.ifInRect(it.drawingRect) }
                     clickedTask?.let {
                         SchedulerConfig.onDailyTaskClickBlock(it.model)
@@ -178,7 +178,7 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
     }
 
     private val createTaskComponent: CreateTaskComponent?
-        get() = render.adapter.visibleComponents.find { it is CreateTaskComponent } as? CreateTaskComponent
+        get() = render.adapter.createTaskComponent
 
     private fun autoSnap() {
         Log.i(TAG, "snapToPosition: ")
