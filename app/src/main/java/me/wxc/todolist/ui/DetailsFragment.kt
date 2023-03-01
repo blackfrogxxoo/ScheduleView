@@ -27,7 +27,8 @@ class DetailsFragment : BottomSheetDialogFragment() {
     private lateinit var binding: FragmentDetailsBinding
     internal var taskModel: ISchedulerModel by argument()
     internal var onSaveBlock: (model: ISchedulerModel) -> Unit = {}
-    internal var onDeleteBlock: (model: ISchedulerModel) -> Unit = {}
+    internal var onDeleteBlock: (model: ISchedulerModel, deleteOption: DeleteOptionFragment.DeleteOption) -> Unit =
+        { model, deleteOption -> }
     private val sdf by lazy { SimpleDateFormat("yyyy-MM-dd\nHH:mm") }
     private val timePicker by lazy {
         val picker = TimePickerBuilder(context) { date, v ->
@@ -112,8 +113,15 @@ class DetailsFragment : BottomSheetDialogFragment() {
             dismissAllowingStateLoss()
         }
         binding.delete.setOnClickListener {
-            onDeleteBlock.invoke(taskModel)
-            dismissAllowingStateLoss()
+            if (taskModel.repeatMode !is RepeatMode.Never) {
+                DeleteOptionFragment.show(this@DetailsFragment) {
+                    onDeleteBlock.invoke(taskModel, it)
+                    dismissAllowingStateLoss()
+                }
+            } else {
+                onDeleteBlock.invoke(taskModel, DeleteOptionFragment.DeleteOption.ONE)
+                dismissAllowingStateLoss()
+            }
         }
         binding.repeatMode.setOnClickListener {
             RepeatModeFragment.show(

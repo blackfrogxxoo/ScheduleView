@@ -53,17 +53,26 @@ class MainViewModel : ViewModel() {
 
     suspend fun removeDailyTask(
         model: DailyTaskModel,
-        adapterModels: MutableList<ISchedulerModel>
+        adapterModels: MutableList<ISchedulerModel>,
+        deleteOption: DeleteOptionFragment.DeleteOption
     ) {
         withContext(Dispatchers.IO) {
-            if (model.repeatMode == RepeatMode.Never) {
-                RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java)
-                    .removeById(model.id)
-                adapterModels.remove(model)
-            } else {
-                RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java)
-                    .removeByRepeatId(model.repeatId)
-                adapterModels.removeAll(adapterModels.filter { (it as? DailyTaskModel)?.repeatId == model.repeatId })
+            when (deleteOption) {
+                DeleteOptionFragment.DeleteOption.ONE -> {
+                    RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java)
+                        .removeById(model.id)
+                    adapterModels.remove(model)
+                }
+                DeleteOptionFragment.DeleteOption.ALL -> {
+                    RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java)
+                        .removeByRepeatId(model.repeatId, -1L)
+                    adapterModels.removeAll(adapterModels.filter { (it as? DailyTaskModel)?.repeatId == model.repeatId })
+                }
+                else -> {
+                    RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java)
+                        .removeByRepeatId(model.repeatId, model.id)
+                    adapterModels.removeAll(adapterModels.filter { (it as? DailyTaskModel)?.repeatId == model.repeatId && it.id >= model.id })
+                }
             }
         }
     }

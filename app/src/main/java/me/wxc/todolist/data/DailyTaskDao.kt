@@ -24,6 +24,6 @@ interface DailyTaskDao {
     @Query("DELETE FROM daily_task WHERE id = :id")
     fun removeById(id: Long)
 
-    @Query("DELETE FROM daily_task WHERE repeatId = :id")
-    fun removeByRepeatId(id: String)
+    @Query("DELETE FROM daily_task WHERE repeatId = :repeatId AND id >= :fromId")
+    fun removeByRepeatId(repeatId: String, fromId: Long)
 }

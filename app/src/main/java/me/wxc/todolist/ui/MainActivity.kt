@@ -125,11 +125,12 @@ class MainActivity : AppCompatActivity() {
                             monthAdapter.refreshCurrentItem()
                         }
                     }
-                    onDeleteBlock = {
+                    onDeleteBlock = { deletedModel, deleteOption ->
                         SchedulerConfig.lifecycleScope.launch {
                             mainViewModel.removeDailyTask(
-                                it as DailyTaskModel,
-                                binding.schedulerView.adapter.models
+                                deletedModel as DailyTaskModel,
+                                binding.schedulerView.adapter.models,
+                                deleteOption
                             )
                             if (model.repeatMode == RepeatMode.Never) {
                                 binding.schedulerView.adapter.notifyModelRemoved(model)
