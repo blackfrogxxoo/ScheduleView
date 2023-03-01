@@ -45,7 +45,16 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
             adapter = if (startTime == -1L) {
                 null
             } else {
-                Adapter(schedulerModels)
+                Adapter(schedulerModels).apply {
+                    if (focusedDayTime != -1L) {
+                        val index = focusedDayTime.dDays - startTime.dDays
+                        smoothScrollToPosition(index.toInt())
+                    }
+                }
+            }
+            if (adapter != null && focusedDayTime != -1L) {
+                val index = focusedDayTime.dDays - startTime.dDays
+                smoothScrollToPosition(index.toInt()) // FIXME 增删任务后，不滑动一下显示不出来
             }
         }
 
@@ -93,7 +102,8 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
         return super.dispatchTouchEvent(e)
     }
 
-    inner class Adapter(private val schedulerModels: List<ISchedulerModel>) : RecyclerView.Adapter<VH>() {
+    inner class Adapter(private val schedulerModels: List<ISchedulerModel>) :
+        RecyclerView.Adapter<VH>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             return VH(DailyTaskListView(parent.context).apply {
                 layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
