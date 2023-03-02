@@ -44,6 +44,7 @@ interface ISchedulerComponent<T : ISchedulerModel> {
     val drawingRect: RectF
     fun onDraw(canvas: Canvas, paint: Paint)
     fun updateDrawingRect(anchorPoint: Point)
+    fun setCoincidedScheduleModels(coincided: List<ISchedulerModel>) {}
     fun onTouchEvent(e: MotionEvent): Boolean = false
 
     companion object {

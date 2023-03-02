@@ -7,6 +7,7 @@ import me.wxc.widget.base.ISchedulerEditable
 import me.wxc.widget.base.ISchedulerModel
 import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.tools.*
+import kotlin.math.roundToInt
 
 class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerComponent<DailyTaskModel>,
     ISchedulerEditable {
@@ -83,7 +84,13 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
         paint.pathEffect = null
         paint.style = Paint.Style.FILL
         paint.textSize = 14f.dp
-        canvas.drawText(model.title, drawingRect.left + 12f.dp, drawingRect.top + 22f.dp, paint, drawingRect.width() - 12f.dp)
+        canvas.drawText(
+            model.title,
+            drawingRect.left + 12f.dp,
+            drawingRect.top + 22f.dp,
+            paint,
+            drawingRect.width() - 12f.dp
+        )
         if (editable) { // TODO 长按改变editable
             drawUpdatingRect(canvas, paint, drawingRect)
         }
@@ -120,6 +127,21 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
         drawingRect.right = originRect.right + anchorPoint.x
         drawingRect.top = originRect.top + anchorPoint.y
         drawingRect.bottom = originRect.bottom + anchorPoint.y
+    }
+
+    override fun setCoincidedScheduleModels(coincided: List<ISchedulerModel>) {
+        if (coincided.isNotEmpty()) {
+            // TODO 优化时间冲突的日程UI
+            val index = coincided.indexOf(model)
+            val size = coincided.size
+            val padding = (70f.dp / size).coerceAtLeast(20f.dp)
+            val width = dayWidth - padding
+            if (originRect.width().roundToInt() == dayWidth.roundToInt()) {
+                val originR = originRect.right
+                originRect.left = (originRect.left + index * padding).coerceAtMost(originR - 50f.dp)
+                originRect.right = (originRect.left + width).coerceAtMost(originR)
+            }
+        }
     }
 }
 

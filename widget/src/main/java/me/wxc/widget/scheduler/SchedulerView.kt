@@ -50,16 +50,31 @@ class SchedulerView @JvmOverloads constructor(
         }
         val start = -(calendarPosition.x / dayWidth).toInt() - 1
         val end = start + 1 + (width / dayWidth).toInt()
+        val coincided = mutableListOf<CoincideModel>()
         (adapter as ThreeDayAdapter).modelsGroupByDay
             .filterKeys { it in start..end }.flatMap { it.value }
+            .apply {
+                this.sortedBy { it.startTime }.forEach {
+                    if (coincided.isEmpty() || coincided.last().endTime <= it.startTime) {
+                        coincided.add(CoincideModel(it.startTime, it.endTime, mutableListOf(it)))
+                    } else {
+                        coincided.last().endTime =
+                            it.endTime.coerceAtLeast(coincided.last().endTime)
+                        coincided.last().coincided.add(it)
+                    }
+                }
+            }
             .map { adapter.onCreateComponent(it) }
             .apply {
                 adapter.visibleComponent = this
-                Log.i(TAG, "onDraw size: $size")
-            }.forEach {
-                it.updateDrawingRect(calendarPosition)
-                if (it.drawingRect.ifVisible(this) || it is CreateTaskComponent || it is DateLineComponent) {
-                    it.onDraw(canvas, paint)
+            }.forEach { component ->
+                component.setCoincidedScheduleModels(
+                    coincided.find { it.coincided.size > 1 && it.coincided.contains(component.model) }?.coincided
+                        ?: emptyList()
+                )
+                component.updateDrawingRect(calendarPosition)
+                if (component.drawingRect.ifVisible(this) || component is CreateTaskComponent || component is DateLineComponent) {
+                    component.onDraw(canvas, paint)
                 }
             }
         adapter.createTaskComponent?.let {
@@ -104,6 +119,12 @@ class SchedulerView @JvmOverloads constructor(
         return true
     }
 }
+
+data class CoincideModel(
+    override var startTime: Long,
+    override var endTime: Long,
+    val coincided: MutableList<ISchedulerModel>
+) : ISchedulerModel
 
 class ThreeDayAdapter : ISchedulerRenderAdapter {
     override var models: MutableList<ISchedulerModel> = mutableListOf()
