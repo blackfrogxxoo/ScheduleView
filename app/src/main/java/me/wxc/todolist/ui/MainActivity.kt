@@ -13,13 +13,13 @@ import kotlinx.coroutines.launch
 import me.wxc.todolist.App
 import me.wxc.todolist.R
 import me.wxc.todolist.databinding.ActivityMainBinding
-import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISchedulerWidget
+import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.IScheduleWidget
 import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.calender.MonthAdapter
-import me.wxc.widget.scheduler.SchedulerWidget
-import me.wxc.widget.scheduler.components.CreateTaskModel
-import me.wxc.widget.scheduler.components.DailyTaskModel
+import me.wxc.widget.schedule.ScheduleWidget
+import me.wxc.widget.schedule.components.CreateTaskModel
+import me.wxc.widget.schedule.components.DailyTaskModel
 import me.wxc.widget.tools.*
 
 class MainActivity : AppCompatActivity() {
@@ -31,8 +31,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initializeSchedulerConfig()
-        val calendarWidget = SchedulerWidget(binding.schedulerView)
+        initializeScheduleConfig()
+        val calendarWidget = ScheduleWidget(binding.scheduleView)
         binding.yyyyM.text = sdf_yyyyM.format(System.currentTimeMillis())
 
         binding.monthViewList.run {
@@ -41,15 +41,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.today.setOnClickListener {
-            if (binding.schedulerView.isVisible) {
+            if (binding.scheduleView.isVisible) {
                 calendarWidget.selectedDayTime = startOfDay().timeInMillis
             } else {
                 monthAdapter.selectedDayTime = startOfDay().timeInMillis
             }
         }
         binding.fab.setOnClickListener {
-            SchedulerConfig.onCreateTaskClickBlock(CreateTaskModel(
-                startTime = SchedulerConfig.selectedDayTime + 10 * hourMillis,
+            ScheduleConfig.onCreateTaskClickBlock(CreateTaskModel(
+                startTime = ScheduleConfig.selectedDayTime + 10 * hourMillis,
                 duration = quarterMillis * 2,
                 onNeedScrollBlock = { _, _ -> }
             ))
@@ -61,31 +61,31 @@ class MainActivity : AppCompatActivity() {
                     when (menuItem.itemId) {
                         R.id.threeDay -> {
                             val fromMonth = binding.monthViewList.visibility == View.VISIBLE
-                            binding.schedulerView.visibility = View.VISIBLE
+                            binding.scheduleView.visibility = View.VISIBLE
                             binding.monthViewList.visibility = View.GONE
-                            calendarWidget.renderRange = ISchedulerWidget.RenderRange.ThreeDayRange
+                            calendarWidget.renderRange = IScheduleWidget.RenderRange.ThreeDayRange
                             if (fromMonth) {
                                 calendarWidget.selectedDayTime =
-                                    startOfDay(SchedulerConfig.selectedDayTime).timeInMillis
+                                    startOfDay(ScheduleConfig.selectedDayTime).timeInMillis
                             }
                         }
                         R.id.singleDay -> {
                             val fromMonth = binding.monthViewList.visibility == View.VISIBLE
-                            binding.schedulerView.visibility = View.VISIBLE
+                            binding.scheduleView.visibility = View.VISIBLE
                             binding.monthViewList.visibility = View.GONE
-                            calendarWidget.renderRange = ISchedulerWidget.RenderRange.SingleDayRange
+                            calendarWidget.renderRange = IScheduleWidget.RenderRange.SingleDayRange
                             if (fromMonth) {
                                 calendarWidget.selectedDayTime =
-                                    startOfDay(SchedulerConfig.selectedDayTime).timeInMillis
+                                    startOfDay(ScheduleConfig.selectedDayTime).timeInMillis
                             }
                         }
                         R.id.month -> {
-                            val fromDay = binding.schedulerView.visibility == View.VISIBLE
-                            binding.schedulerView.visibility = View.GONE
+                            val fromDay = binding.scheduleView.visibility == View.VISIBLE
+                            binding.scheduleView.visibility = View.GONE
                             binding.monthViewList.visibility = View.VISIBLE
                             if (fromDay) {
                                 monthAdapter.selectedDayTime =
-                                    startOfDay(SchedulerConfig.selectedDayTime).timeInMillis
+                                    startOfDay(ScheduleConfig.selectedDayTime).timeInMillis
                             }
                         }
                         else -> {}
@@ -97,17 +97,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun initializeSchedulerConfig() {
-        SchedulerConfig.run {
+    private fun initializeScheduleConfig() {
+        ScheduleConfig.run {
             app = App.self
-//        schedulerStartTime = System.currentTimeMillis() - 30 * dayMillis
-//        schedulerEndTime = System.currentTimeMillis() + 30 * dayMillis
+//        scheduleStartTime = System.currentTimeMillis() - 30 * dayMillis
+//        scheduleEndTime = System.currentTimeMillis() + 30 * dayMillis
             onDateSelectedListener = {
                 Log.i(TAG, "date select: ${sdf_yyyyMMddHHmmss.format(timeInMillis)}")
                 binding.yyyyM.text = sdf_yyyyM.format(timeInMillis)
                 selectedDayTime = timeInMillis
             }
-            schedulerModelsProvider = { startTime, endTime ->
+            scheduleModelsProvider = { startTime, endTime ->
                 mainViewModel.getRangeDailyTask(startTime, endTime)
             }
             lifecycleScope = this@MainActivity.lifecycleScope
@@ -115,29 +115,29 @@ class MainActivity : AppCompatActivity() {
                 DetailsFragment().apply {
                     taskModel = model
                     onSaveBlock = {
-                        SchedulerConfig.lifecycleScope.launch {
+                        ScheduleConfig.lifecycleScope.launch {
                             mainViewModel.updateDailyTask(
                                 it as DailyTaskModel,
-                                binding.schedulerView.adapter.models
+                                binding.scheduleView.adapter.models
                             )
-                            binding.schedulerView.adapter.notifyModelsChanged()
-                            binding.schedulerView.invalidate()
+                            binding.scheduleView.adapter.notifyModelsChanged()
+                            binding.scheduleView.invalidate()
                             monthAdapter.refreshCurrentItem()
                         }
                     }
                     onDeleteBlock = { deletedModel, deleteOption ->
-                        SchedulerConfig.lifecycleScope.launch {
+                        ScheduleConfig.lifecycleScope.launch {
                             mainViewModel.removeDailyTask(
                                 deletedModel as DailyTaskModel,
-                                binding.schedulerView.adapter.models,
+                                binding.scheduleView.adapter.models,
                                 deleteOption
                             )
                             if (model.repeatMode == RepeatMode.Never) {
-                                binding.schedulerView.adapter.notifyModelRemoved(model)
+                                binding.scheduleView.adapter.notifyModelRemoved(model)
                             } else {
-                                binding.schedulerView.adapter.notifyModelsChanged()
+                                binding.scheduleView.adapter.notifyModelsChanged()
                             }
-                            binding.schedulerView.invalidate()
+                            binding.scheduleView.invalidate()
                             monthAdapter.refreshCurrentItem()
                         }
                     }
@@ -147,15 +147,15 @@ class MainActivity : AppCompatActivity() {
                 DetailsFragment().apply {
                     taskModel = model
                     onSaveBlock = {
-                        SchedulerConfig.lifecycleScope.launch {
+                        ScheduleConfig.lifecycleScope.launch {
                             mainViewModel.saveCreateDailyTask(
                                 it as CreateTaskModel,
-                                binding.schedulerView.adapter.models
+                                binding.scheduleView.adapter.models
                             )
-                            binding.schedulerView.removeCreateTask()
-                            binding.schedulerView.adapter.notifyModelsChanged()
+                            binding.scheduleView.removeCreateTask()
+                            binding.scheduleView.adapter.notifyModelsChanged()
                             Log.i(TAG, "daily task added: ${model.title}")
-                            binding.schedulerView.invalidate()
+                            binding.scheduleView.invalidate()
                             monthAdapter.refreshCurrentItem()
                         }
                     }

@@ -1,20 +1,20 @@
-package me.wxc.widget.scheduler.components
+package me.wxc.widget.schedule.components
 
 import android.graphics.*
 import android.util.Log
 import android.view.MotionEvent
-import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISchedulerComponent
-import me.wxc.widget.base.ISchedulerComponent.Companion.TAG
-import me.wxc.widget.base.ISchedulerEditable
-import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.IScheduleComponent
+import me.wxc.widget.base.IScheduleComponent.Companion.TAG
+import me.wxc.widget.base.IScheduleEditable
+import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.tools.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class CreateTaskComponent(override var model: CreateTaskModel) :
-    ISchedulerComponent<CreateTaskModel>, ISchedulerEditable {
+    IScheduleComponent<CreateTaskModel>, IScheduleEditable {
     override val originRect: RectF = originRect()
     override val drawingRect: RectF = originRect()
     private val circleRadius = 4f.dp
@@ -33,7 +33,7 @@ class CreateTaskComponent(override var model: CreateTaskModel) :
         if (drawRect.bottom < dateLineHeight) return
         canvas.save()
         canvas.clipRect(clockWidth, dateLineHeight, canvas.width.toFloat(), canvas.height.toFloat())
-        paint.color = SchedulerConfig.colorBlue3
+        paint.color = ScheduleConfig.colorBlue3
         paint.style = Paint.Style.FILL
         canvas.drawRoundRect(
             drawRect.left + 2f.dp,
@@ -54,7 +54,7 @@ class CreateTaskComponent(override var model: CreateTaskModel) :
     }
 
     private fun drawUpdatingRect(canvas: Canvas, paint: Paint, drawRect: RectF) {
-        paint.color = SchedulerConfig.colorBlue1
+        paint.color = ScheduleConfig.colorBlue1
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 0.5f.dp
         canvas.drawRoundRect(
@@ -67,10 +67,10 @@ class CreateTaskComponent(override var model: CreateTaskModel) :
             paint
         )
         paint.style = Paint.Style.FILL
-        paint.color = SchedulerConfig.colorWhite
+        paint.color = ScheduleConfig.colorWhite
         canvas.drawCircle(drawRect.right - circlePadding, drawRect.top, circleRadius, paint)
         canvas.drawCircle(drawRect.left + circlePadding, drawRect.bottom, circleRadius, paint)
-        paint.color = SchedulerConfig.colorBlue1
+        paint.color = ScheduleConfig.colorBlue1
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 2f.dp
         canvas.drawCircle(drawRect.right - circlePadding, drawRect.top, circleRadius, paint)
@@ -213,7 +213,7 @@ class CreateTaskComponent(override var model: CreateTaskModel) :
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (e.action == MotionEvent.ACTION_UP && abs(lastX - downX) < 5.dp && abs(lastY - downY) < 5.dp && System.currentTimeMillis() - downTimestamp < 1000) {
-                    SchedulerConfig.onCreateTaskClickBlock(model)
+                    ScheduleConfig.onCreateTaskClickBlock(model)
                     return true
                 }
                 model.run {
@@ -249,7 +249,7 @@ data class CreateTaskModel(
     var state: State = State.IDLE,
     var repeatMode: RepeatMode = RepeatMode.Never,
     val onNeedScrollBlock: (x: Int, y: Int) -> Unit
-) : ISchedulerModel {
+) : IScheduleModel {
     override val endTime: Long
         get() = startTime + duration
 

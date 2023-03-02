@@ -12,8 +12,8 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.SchedulerConfig.lifecycleScope
+import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.ScheduleConfig.lifecycleScope
 import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.tools.TAG
 import me.wxc.widget.tools.dMonths
@@ -24,10 +24,10 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
     ISelectedDayTimeHolder {
 
     override var selectedDayTime: Long
-        get() = SchedulerConfig.selectedDayTime
+        get() = ScheduleConfig.selectedDayTime
         set(value) {
             val selectedDay = startOfDay(value)
-            val firstDay = startOfDay(SchedulerConfig.schedulerStartTime)
+            val firstDay = startOfDay(ScheduleConfig.scheduleStartTime)
             val position =
                 12 * (selectedDay.get(Calendar.YEAR) - firstDay.get(Calendar.YEAR)) + (selectedDay.get(
                     Calendar.MONTH
@@ -41,8 +41,8 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
         }
 
     private val monthCount: Int by lazy {
-        val start = startOfDay(SchedulerConfig.schedulerStartTime)
-        val end = startOfDay(SchedulerConfig.schedulerEndTime)
+        val start = startOfDay(ScheduleConfig.scheduleStartTime)
+        val end = startOfDay(ScheduleConfig.scheduleEndTime)
         val result =
             (end.get(Calendar.YEAR) - start.get(Calendar.YEAR)) * 12 + (end.get(Calendar.MONTH) - start.get(
                 Calendar.MONTH
@@ -53,7 +53,7 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
     init {
         recyclerView.run {
             post {
-                selectedDayTime = SchedulerConfig.selectedDayTime
+                selectedDayTime = ScheduleConfig.selectedDayTime
             }
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 private var lastPosition = -1
@@ -63,13 +63,13 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
                     val position = llm.findFirstCompletelyVisibleItemPosition()
                     if (position != -1 && lastPosition != position) {
                         lastPosition = position
-                        val calendar = startOfDay(SchedulerConfig.schedulerStartTime).apply {
+                        val calendar = startOfDay(ScheduleConfig.scheduleStartTime).apply {
                             add(Calendar.MONTH, position)
                         }
                         if (calendar.timeInMillis.dMonths == System.currentTimeMillis().dMonths) {
-                            SchedulerConfig.onDateSelectedListener.invoke(startOfDay())
+                            ScheduleConfig.onDateSelectedListener.invoke(startOfDay())
                         } else {
-                            SchedulerConfig.onDateSelectedListener.invoke(calendar)
+                            ScheduleConfig.onDateSelectedListener.invoke(calendar)
                         }
                     }
                 }
@@ -86,13 +86,13 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
 
     override fun onBindViewHolder(holder: VH, position: Int) {
         val monthView = holder.itemView as MonthView
-        monthView.calendar.timeInMillis = startOfDay(SchedulerConfig.schedulerStartTime).apply {
+        monthView.calendar.timeInMillis = startOfDay(ScheduleConfig.scheduleStartTime).apply {
             add(Calendar.MONTH, position)
         }.timeInMillis
 
         lifecycleScope.launch {
-            monthView.schedulerModels = withContext(Dispatchers.IO) {
-                SchedulerConfig.schedulerModelsProvider.invoke(
+            monthView.scheduleModels = withContext(Dispatchers.IO) {
+                ScheduleConfig.scheduleModelsProvider.invoke(
                     monthView.startTime,
                     monthView.endTime
                 )
@@ -106,8 +106,8 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
         recyclerView.descendants.filterIsInstance<MonthView>().filter { it.isAttachedToWindow }
             .forEach { monthView ->
                 lifecycleScope.launch {
-                    monthView.schedulerModels = withContext(Dispatchers.IO) {
-                        SchedulerConfig.schedulerModelsProvider.invoke(
+                    monthView.scheduleModels = withContext(Dispatchers.IO) {
+                        ScheduleConfig.scheduleModelsProvider.invoke(
                             monthView.startTime,
                             monthView.endTime
                         )

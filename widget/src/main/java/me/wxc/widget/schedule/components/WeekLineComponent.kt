@@ -1,16 +1,16 @@
-package me.wxc.widget.scheduler.components
+package me.wxc.widget.schedule.components
 
 import android.graphics.*
-import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISchedulerComponent
-import me.wxc.widget.base.ISchedulerModel
-import me.wxc.widget.scheduler.SchedulerWidget
+import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.IScheduleComponent
+import me.wxc.widget.base.IScheduleModel
+import me.wxc.widget.schedule.ScheduleWidget
 import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent<WeekLineModel> {
+class WeekLineComponent(override var model: WeekLineModel) : IScheduleComponent<WeekLineModel> {
     override val originRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     override val drawingRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     private val shadowRect: RectF = RectF(
@@ -31,14 +31,14 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
             shadowRect.top,
             shadowRect.left,
             shadowRect.bottom,
-            SchedulerConfig.colorTransparent2,
-            SchedulerConfig.colorTransparent1,
+            ScheduleConfig.colorTransparent2,
+            ScheduleConfig.colorTransparent1,
             Shader.TileMode.CLAMP
         )
     }
 
     override fun onDraw(canvas: Canvas, paint: Paint) {
-        if (SchedulerWidget.isThreeDay) return
+        if (ScheduleWidget.isThreeDay) return
         parentWidth = canvas.width
         canvas.save()
         canvas.clipRect(drawingRect)
@@ -55,9 +55,9 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
                 calendar.timeInMillis.dDays.toInt() == (parentScrollX + clockWidth).xToDDays
             if (selected) {
                 paint.color = if (dDays != 0L) {
-                    SchedulerConfig.colorBlack4
+                    ScheduleConfig.colorBlack4
                 } else {
-                    SchedulerConfig.colorBlue1
+                    ScheduleConfig.colorBlue1
                 }
                 canvas.drawCircle(
                     centerX,
@@ -68,14 +68,14 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
             }
             paint.color = if (dDays == 0L) {
                 if (selected) {
-                    SchedulerConfig.colorWhite
+                    ScheduleConfig.colorWhite
                 } else {
-                    SchedulerConfig.colorBlue1
+                    ScheduleConfig.colorBlue1
                 }
             } else if (dDays < 0) {
-                SchedulerConfig.colorBlack3
+                ScheduleConfig.colorBlack3
             } else {
-                SchedulerConfig.colorBlack1
+                ScheduleConfig.colorBlack1
             }
             paint.textSize = 16f.dp
             paint.isFakeBoldText = true
@@ -86,11 +86,11 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
                 paint
             )
             paint.color = if (dDays == 0L) {
-                SchedulerConfig.colorBlue1
+                ScheduleConfig.colorBlue1
             } else if (dDays < 0) {
-                SchedulerConfig.colorBlack3
+                ScheduleConfig.colorBlack3
             } else {
-                SchedulerConfig.colorBlack1
+                ScheduleConfig.colorBlack1
             }
             paint.textSize = 11f.dp
             paint.isFakeBoldText = false
@@ -125,7 +125,7 @@ class WeekLineComponent(override var model: WeekLineModel) : ISchedulerComponent
     }
 }
 
-object WeekLineModel : ISchedulerModel {
+object WeekLineModel : IScheduleModel {
     override var startTime: Long = 0
     override var endTime: Long = 0
 }

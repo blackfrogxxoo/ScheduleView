@@ -3,13 +3,13 @@ package me.wxc.widget
 import android.app.Application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.GlobalScope
-import me.wxc.widget.base.ISchedulerModel
-import me.wxc.widget.scheduler.components.CreateTaskModel
-import me.wxc.widget.scheduler.components.DailyTaskModel
+import me.wxc.widget.base.IScheduleModel
+import me.wxc.widget.schedule.components.CreateTaskModel
+import me.wxc.widget.schedule.components.DailyTaskModel
 import me.wxc.widget.tools.startOfDay
 import java.util.*
 
-object SchedulerConfig {
+object ScheduleConfig {
     lateinit var app: Application
     val colorWhite: Int
         get() = app.getColor(R.color.white)
@@ -39,12 +39,12 @@ object SchedulerConfig {
         get() = app.getColor(R.color.transparent2)
     val colorTransparent3: Int
         get() = app.getColor(R.color.transparent3)
-    var schedulerStartTime: Long = 0L
-    var schedulerEndTime: Long = startOfDay().apply { add(Calendar.MONTH, 1200) }.timeInMillis
+    var scheduleStartTime: Long = 0L
+    var scheduleEndTime: Long = startOfDay().apply { add(Calendar.MONTH, 1200) }.timeInMillis
     var lifecycleScope: CoroutineScope = GlobalScope
     var selectedDayTime: Long = System.currentTimeMillis()
     var onDateSelectedListener: Calendar.() -> Unit = {}
-    var schedulerModelsProvider: suspend (startTime: Long, endTime: Long) -> List<ISchedulerModel> =
+    var scheduleModelsProvider: suspend (startTime: Long, endTime: Long) -> List<IScheduleModel> =
         { _, _ ->
             emptyList()
         }

@@ -6,15 +6,15 @@ import com.stonesx.datasource.repository.RepositoryManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.wxc.todolist.data.DailyTaskLocal
-import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.base.RepeatMode.Companion.parseLocalRepeatMode
-import me.wxc.widget.scheduler.components.CreateTaskModel
-import me.wxc.widget.scheduler.components.DailyTaskModel
+import me.wxc.widget.schedule.components.CreateTaskModel
+import me.wxc.widget.schedule.components.DailyTaskModel
 import java.util.*
 
 class MainViewModel : ViewModel() {
-    suspend fun getDailyTasks(adapterModels: MutableList<ISchedulerModel>) {
+    suspend fun getDailyTasks(adapterModels: MutableList<IScheduleModel>) {
         return withContext(Dispatchers.IO) {
             RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java)
                 .getAllDailyTasks().map {
@@ -35,7 +35,7 @@ class MainViewModel : ViewModel() {
     suspend fun getRangeDailyTask(
         startTime: Long,
         endTime: Long
-    ): List<ISchedulerModel> = withContext(Dispatchers.IO) {
+    ): List<IScheduleModel> = withContext(Dispatchers.IO) {
         RepositoryManager.getInstance().findRepository(
             DailyTaskRepository::class.java
         )
@@ -53,7 +53,7 @@ class MainViewModel : ViewModel() {
 
     suspend fun removeDailyTask(
         model: DailyTaskModel,
-        adapterModels: MutableList<ISchedulerModel>,
+        adapterModels: MutableList<IScheduleModel>,
         deleteOption: DeleteOptionFragment.DeleteOption
     ) {
         withContext(Dispatchers.IO) {
@@ -79,7 +79,7 @@ class MainViewModel : ViewModel() {
 
     suspend fun updateDailyTask(
         model: DailyTaskModel,
-        adapterModels: MutableList<ISchedulerModel>
+        adapterModels: MutableList<IScheduleModel>
     ) {
         withContext(Dispatchers.IO) {
             RepositoryManager.getInstance().findRepository(DailyTaskRepository::class.java)
@@ -101,7 +101,7 @@ class MainViewModel : ViewModel() {
 
     suspend fun saveCreateDailyTask(
         model: CreateTaskModel,
-        adapterModels: MutableList<ISchedulerModel>
+        adapterModels: MutableList<IScheduleModel>
     ) {
         withContext(Dispatchers.Default) {
             if (model.title.isBlank()) {
@@ -120,7 +120,7 @@ class MainViewModel : ViewModel() {
 
     private fun createSingleTask(
         model: CreateTaskModel,
-        adapterModels: MutableList<ISchedulerModel>,
+        adapterModels: MutableList<IScheduleModel>,
     ) {
         val repeatId = UUID.randomUUID().toString()
         val id = RepositoryManager.getInstance()
@@ -149,7 +149,7 @@ class MainViewModel : ViewModel() {
 
     private fun performSaveRepeatableTask(
         model: CreateTaskModel,
-        adapterModels: MutableList<ISchedulerModel>
+        adapterModels: MutableList<IScheduleModel>
     ) {
         val repeatId = UUID.randomUUID().toString()
         val locals = (0..2000).map {

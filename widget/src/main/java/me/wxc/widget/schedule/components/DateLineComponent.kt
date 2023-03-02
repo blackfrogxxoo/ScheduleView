@@ -1,14 +1,14 @@
-package me.wxc.widget.scheduler.components
+package me.wxc.widget.schedule.components
 
 import android.graphics.*
-import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISchedulerComponent
-import me.wxc.widget.base.ISchedulerModel
-import me.wxc.widget.scheduler.SchedulerWidget
+import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.IScheduleComponent
+import me.wxc.widget.base.IScheduleModel
+import me.wxc.widget.schedule.ScheduleWidget
 import me.wxc.widget.tools.*
 import kotlin.math.roundToInt
 
-class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent<DateLineModel> {
+class DateLineComponent(override var model: DateLineModel) : IScheduleComponent<DateLineModel> {
     override val originRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     override val drawingRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     private val shadowRect: RectF = RectF(
@@ -26,14 +26,14 @@ class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent
             shadowRect.top,
             shadowRect.left,
             shadowRect.bottom,
-            SchedulerConfig.colorTransparent2,
-            SchedulerConfig.colorTransparent1,
+            ScheduleConfig.colorTransparent2,
+            ScheduleConfig.colorTransparent1,
             Shader.TileMode.CLAMP
         )
     }
 
     override fun onDraw(canvas: Canvas, paint: Paint) {
-        if (!SchedulerWidget.isThreeDay) return
+        if (!ScheduleWidget.isThreeDay) return
         parentWidth = canvas.width
         canvas.save()
         canvas.clipRect(drawingRect)
@@ -43,11 +43,11 @@ class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent
             val startTime = startOfDay().timeInMillis + startX.xToDDays * dayMillis
             val dDays = startX.xToDDays - System.currentTimeMillis().dDays
             paint.color = if (dDays == 0L) {
-                SchedulerConfig.colorBlue1
+                ScheduleConfig.colorBlue1
             } else if (dDays < 0) {
-                SchedulerConfig.colorBlack3
+                ScheduleConfig.colorBlack3
             } else {
-                SchedulerConfig.colorBlack1
+                ScheduleConfig.colorBlack1
             }
             paint.textSize = 20f.dp
             paint.isFakeBoldText = true
@@ -82,7 +82,7 @@ class DateLineComponent(override var model: DateLineModel) : ISchedulerComponent
     }
 }
 
-object DateLineModel : ISchedulerModel {
+object DateLineModel : IScheduleModel {
     override var startTime: Long = 0
     override var endTime: Long = 0
 }

@@ -2,7 +2,6 @@ package me.wxc.widget.calender
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,11 +12,11 @@ import androidx.core.text.color
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import me.wxc.widget.R
-import me.wxc.widget.SchedulerConfig
+import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.ICalendarRender
-import me.wxc.widget.base.ISchedulerModel
-import me.wxc.widget.scheduler.components.CreateTaskModel
-import me.wxc.widget.scheduler.components.DailyTaskModel
+import me.wxc.widget.base.IScheduleModel
+import me.wxc.widget.schedule.components.CreateTaskModel
+import me.wxc.widget.schedule.components.DailyTaskModel
 import me.wxc.widget.tools.*
 import java.util.*
 
@@ -38,7 +37,7 @@ class DailyTaskListView @JvmOverloads constructor(
         set(value) {
             field = value
         }
-    override var schedulerModels: List<ISchedulerModel> = listOf()
+    override var scheduleModels: List<IScheduleModel> = listOf()
         set(value) {
             field = value
             if (value.any()) {
@@ -59,13 +58,13 @@ class DailyTaskListView @JvmOverloads constructor(
         emptyView = findViewById(R.id.emptyView)
         emptyView.text = buildSpannedString {
             append("暂无日程安排，")
-            color(SchedulerConfig.colorBlue1) {
+            color(ScheduleConfig.colorBlue1) {
                 append("点击创建")
             }
         }
         emptyView.setOnClickListener {
-            SchedulerConfig.onCreateTaskClickBlock(CreateTaskModel(
-                startTime = SchedulerConfig.selectedDayTime + 10 * hourMillis,
+            ScheduleConfig.onCreateTaskClickBlock(CreateTaskModel(
+                startTime = ScheduleConfig.selectedDayTime + 10 * hourMillis,
                 duration = quarterMillis * 2,
                 onNeedScrollBlock = { _, _ -> }
             ))
@@ -81,11 +80,11 @@ class DailyTaskListView @JvmOverloads constructor(
         }
 
         private fun generateSize() {
-            size = schedulerModels.size
-            if (size > 0 && schedulerModels[0].startTime.dDays == System.currentTimeMillis().dDays) {
+            size = scheduleModels.size
+            if (size > 0 && scheduleModels[0].startTime.dDays == System.currentTimeMillis().dDays) {
                 size += 1
                 nowLineIndex = 0
-                schedulerModels.forEach {
+                scheduleModels.forEach {
                     if (it.endTime < System.currentTimeMillis()) {
                         nowLineIndex++
                     } else {
@@ -117,7 +116,7 @@ class DailyTaskListView @JvmOverloads constructor(
                 if (nowLineIndex in 0 until p) {
                     position -= 1
                 }
-                val model = schedulerModels[position]
+                val model = scheduleModels[position]
                 holder.title.text = (model as? DailyTaskModel)?.title
                 holder.timeRange.text =
                     "${sdf_yyyyMMddHHmmss.format(model.startTime)} ~ ${
@@ -128,7 +127,7 @@ class DailyTaskListView @JvmOverloads constructor(
                 holder.fg.visibility =
                     if (model.endTime < System.currentTimeMillis()) VISIBLE else GONE
                 holder.itemView.setOnClickListener {
-                    SchedulerConfig.onDailyTaskClickBlock(model as DailyTaskModel)
+                    ScheduleConfig.onDailyTaskClickBlock(model as DailyTaskModel)
                 }
             }
         }

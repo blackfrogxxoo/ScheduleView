@@ -1,4 +1,4 @@
-package me.wxc.widget.scheduler
+package me.wxc.widget.schedule
 
 import android.content.Context
 import android.graphics.*
@@ -12,12 +12,12 @@ import androidx.core.graphics.toPoint
 import androidx.core.view.updatePadding
 import me.wxc.widget.R
 import me.wxc.widget.base.*
-import me.wxc.widget.scheduler.components.*
+import me.wxc.widget.schedule.components.*
 import me.wxc.widget.tools.*
 
-class SchedulerView @JvmOverloads constructor(
+class ScheduleView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), ISchedulerRender, ISchedulerTaskCreator {
+) : View(context, attrs, defStyleAttr), IScheduleRender, IScheduleCreator {
 
     init {
         updatePadding(top = canvasPadding, bottom = canvasPadding)
@@ -29,9 +29,9 @@ class SchedulerView @JvmOverloads constructor(
             Typeface.NORMAL
         )
     }
-    override lateinit var widget: ISchedulerWidget
+    override lateinit var widget: IScheduleWidget
     override val calendarPosition: Point = Point()
-    override val adapter: ISchedulerRenderAdapter = ThreeDayAdapter()
+    override val adapter: IScheduleRenderAdapter = ScheduleAdapter()
 
     override fun render(x: Int, y: Int) {
         calendarPosition.x = x
@@ -51,7 +51,7 @@ class SchedulerView @JvmOverloads constructor(
         val start = -(calendarPosition.x / dayWidth).toInt() - 1
         val end = start + 1 + (width / dayWidth).toInt()
         val coincided = mutableListOf<CoincideModel>()
-        (adapter as ThreeDayAdapter).modelsGroupByDay
+        (adapter as ScheduleAdapter).modelsGroupByDay
             .filterKeys { it in start..end }.flatMap { it.value }
             .apply {
                 this.sortedBy { it.startTime }.forEach {
@@ -123,16 +123,16 @@ class SchedulerView @JvmOverloads constructor(
 data class CoincideModel(
     override var startTime: Long,
     override var endTime: Long,
-    val coincided: MutableList<ISchedulerModel>
-) : ISchedulerModel
+    val coincided: MutableList<IScheduleModel>
+) : IScheduleModel
 
-class ThreeDayAdapter : ISchedulerRenderAdapter {
-    override var models: MutableList<ISchedulerModel> = mutableListOf()
-    override var modelsGroupByDay = mutableMapOf<Int, List<ISchedulerModel>>()
-    override var visibleComponent: List<ISchedulerComponent<*>> = listOf()
+class ScheduleAdapter : IScheduleRenderAdapter {
+    override var models: MutableList<IScheduleModel> = mutableListOf()
+    override var modelsGroupByDay = mutableMapOf<Int, List<IScheduleModel>>()
+    override var visibleComponent: List<IScheduleComponent<*>> = listOf()
     override var createTaskComponent: CreateTaskComponent? = null
-    override val fixedComponents: List<ISchedulerComponent<*>> =
-        mutableListOf<ISchedulerComponent<*>>().apply {
+    override val fixedComponents: List<IScheduleComponent<*>> =
+        mutableListOf<IScheduleComponent<*>>().apply {
             for (i in 0..24) {
                 add(ClockLineComponent(ClockLineModel(i)))
             }
@@ -141,9 +141,9 @@ class ThreeDayAdapter : ISchedulerRenderAdapter {
             add(NowLineComponent(NowLineModel))
         }.toList()
 
-    private val _taskComponentCache = SparseArray<ISchedulerComponent<*>>()
+    private val _taskComponentCache = SparseArray<IScheduleComponent<*>>()
 
-    override fun onCreateComponent(model: ISchedulerModel): ISchedulerComponent<*> {
+    override fun onCreateComponent(model: IScheduleModel): IScheduleComponent<*> {
         // TODO 引入对象缓存机制
         return when (model) {
             is CreateTaskModel -> createTaskComponent ?: run {
@@ -153,7 +153,7 @@ class ThreeDayAdapter : ISchedulerRenderAdapter {
                 model
             ).apply {
                 _taskComponentCache.append(model.id.toInt(), this)
-                Log.i("SchedulerView", "create component: $this")
+                Log.i("ScheduleView", "create component: $this")
             }
             else -> throw IllegalArgumentException("invalid model: $model")
         }
@@ -166,7 +166,7 @@ class ThreeDayAdapter : ISchedulerRenderAdapter {
         }.toMutableMap()
     }
 
-    override fun notifyModelAdded(model: ISchedulerModel) {
+    override fun notifyModelAdded(model: IScheduleModel) {
         val key = model.startTime.dDays.toInt()
         modelsGroupByDay[key] = modelsGroupByDay
             .getOrPut(key) { emptyList() }
@@ -175,7 +175,7 @@ class ThreeDayAdapter : ISchedulerRenderAdapter {
             .toList()
     }
 
-    private fun List<ISchedulerComponent<*>>.sortComponent(): List<ISchedulerComponent<*>> =
+    private fun List<IScheduleComponent<*>>.sortComponent(): List<IScheduleComponent<*>> =
         sortedBy {
             when (it) {
                 is NowLineComponent -> 1
@@ -185,7 +185,7 @@ class ThreeDayAdapter : ISchedulerRenderAdapter {
             }
         }
 
-    override fun notifyModelRemoved(model: ISchedulerModel) {
+    override fun notifyModelRemoved(model: IScheduleModel) {
         val key = model.startTime.dDays.toInt()
         modelsGroupByDay[key] = modelsGroupByDay
             .getOrPut(key) { emptyList() }

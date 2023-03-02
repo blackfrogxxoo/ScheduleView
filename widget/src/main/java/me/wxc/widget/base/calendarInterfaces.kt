@@ -6,10 +6,10 @@ interface ICalendarRender : ITimeRangeHolder {
     val parentRender: ICalendarRender?
     val calendar: Calendar
     var focusedDayTime: Long
-    var schedulerModels: List<ISchedulerModel>
+    var scheduleModels: List<IScheduleModel>
 
-    fun getSchedulersFrom(from: List<ISchedulerModel>) {
-        schedulerModels = from.filter { it.startTime >= startTime && it.endTime <= endTime }
+    fun getSchedulesFrom(from: List<IScheduleModel>) {
+        scheduleModels = from.filter { it.startTime >= startTime && it.endTime <= endTime }
             .sortedBy { it.startTime }
     }
 }

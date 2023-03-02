@@ -7,11 +7,11 @@ import android.util.Log
 import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import me.wxc.widget.R
-import me.wxc.widget.SchedulerConfig
+import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.ICalendarRender
-import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.base.ISelectedDayTimeHolder
-import me.wxc.widget.scheduler.components.DailyTaskModel
+import me.wxc.widget.schedule.components.DailyTaskModel
 import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.properties.Delegates
@@ -35,12 +35,12 @@ class DayView @JvmOverloads constructor(
     override var focusedDayTime: Long by Delegates.observable(-1) { _, _, time ->
         invalidate()
     }
-    override var schedulerModels: List<ISchedulerModel> = listOf()
+    override var scheduleModels: List<IScheduleModel> = listOf()
         set(value) {
             field = value
             invalidate()
         }
-    override var selectedDayTime: Long = SchedulerConfig.selectedDayTime
+    override var selectedDayTime: Long = ScheduleConfig.selectedDayTime
 
     private val focused: Boolean
         get() = focusedDayTime.dDays == startTime.dDays
@@ -94,12 +94,12 @@ class DayView @JvmOverloads constructor(
 
     private fun drawArrow(canvas: Canvas) {
         if (focused) {
-            paint.color = SchedulerConfig.colorTransparent3
+            paint.color = ScheduleConfig.colorTransparent3
             canvas.drawRect(9f.dp, 27f.dp, canvas.width.toFloat(), canvas.height.toFloat(), paint)
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 2f.dp
             paint.strokeCap = Paint.Cap.ROUND
-            paint.color = SchedulerConfig.colorBlack2
+            paint.color = ScheduleConfig.colorBlack2
             if (arrowPath.isEmpty) {
                 val centerX = (canvas.width + 9f.dp) / 2f
                 val centerY = canvas.height / 2f
@@ -119,18 +119,18 @@ class DayView @JvmOverloads constructor(
         val height = canvas.height - 22f.dp
         val maxSize = (height / 22f.dp).toInt()
         var size = 0
-        schedulerModels.filterIsInstance<DailyTaskModel>().apply {
+        scheduleModels.filterIsInstance<DailyTaskModel>().apply {
             size = this.size
         }.forEachIndexed { index, it ->
             if (index >= maxSize) {
-                paint.color = SchedulerConfig.colorBlack3
+                paint.color = ScheduleConfig.colorBlack3
                 canvas.drawText("+${size - maxSize}", canvas.width - 20f.dp, 20f.dp, paint)
                 return
             }
             val textColor = if (it.expired) {
-                SchedulerConfig.colorBlue2
+                ScheduleConfig.colorBlue2
             } else {
-                SchedulerConfig.colorBlue1
+                ScheduleConfig.colorBlue1
             }
             paint.style = Paint.Style.STROKE
             paint.pathEffect = pathEffect
@@ -163,17 +163,17 @@ class DayView @JvmOverloads constructor(
         paint.color = if (startTime.dDays == System.currentTimeMillis().dDays) {
             if (focusedDayTime == -1L || focusedDayTime.dDays == startTime.dDays) {
                 drawCircle = true
-                SchedulerConfig.colorBlue1
+                ScheduleConfig.colorBlue1
             } else {
                 drawCircle = false
-                SchedulerConfig.colorTransparent1
+                ScheduleConfig.colorTransparent1
             }
         } else if (focused) {
             drawCircle = true
-            SchedulerConfig.colorBlack4
+            ScheduleConfig.colorBlack4
         } else {
             drawCircle = false
-            SchedulerConfig.colorTransparent1
+            ScheduleConfig.colorTransparent1
         }
         if (drawCircle) {
             canvas.drawCircle(textX, textY, 10f.dp, paint)
@@ -183,14 +183,14 @@ class DayView @JvmOverloads constructor(
         paint.textSize = 13f.dp
         paint.color = if (startTime.dDays == System.currentTimeMillis().dDays) {
             if (drawCircle) {
-                SchedulerConfig.colorWhite
+                ScheduleConfig.colorWhite
             } else {
-                SchedulerConfig.colorBlue1
+                ScheduleConfig.colorBlue1
             }
         } else if (startTime < parentRender.calendar.firstDayOfMonthTime || startTime > parentRender.calendar.lastDayOfMonthTime) {
-            SchedulerConfig.colorBlack3
+            ScheduleConfig.colorBlack3
         } else {
-            SchedulerConfig.colorBlack1
+            ScheduleConfig.colorBlack1
         }
         paint.isFakeBoldText = true
         canvas.drawText(startTime.dayOfMonth.toString(), textX, textY + 4f.dp, paint)

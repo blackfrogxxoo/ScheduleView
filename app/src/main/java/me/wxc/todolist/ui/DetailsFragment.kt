@@ -14,10 +14,10 @@ import com.bigkoo.pickerview.builder.TimePickerBuilder
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import me.wxc.todolist.databinding.FragmentDetailsBinding
 import me.wxc.todolist.tools.argument
-import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.base.RepeatMode
-import me.wxc.widget.scheduler.components.CreateTaskModel
-import me.wxc.widget.scheduler.components.DailyTaskModel
+import me.wxc.widget.schedule.components.CreateTaskModel
+import me.wxc.widget.schedule.components.DailyTaskModel
 import me.wxc.widget.tools.TAG
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,9 +25,9 @@ import java.util.*
 
 class DetailsFragment : BottomSheetDialogFragment() {
     private lateinit var binding: FragmentDetailsBinding
-    internal var taskModel: ISchedulerModel by argument()
-    internal var onSaveBlock: (model: ISchedulerModel) -> Unit = {}
-    internal var onDeleteBlock: (model: ISchedulerModel, deleteOption: DeleteOptionFragment.DeleteOption) -> Unit =
+    internal var taskModel: IScheduleModel by argument()
+    internal var onSaveBlock: (model: IScheduleModel) -> Unit = {}
+    internal var onDeleteBlock: (model: IScheduleModel, deleteOption: DeleteOptionFragment.DeleteOption) -> Unit =
         { model, deleteOption -> }
     private val sdf by lazy { SimpleDateFormat("yyyy-MM-dd\nHH:mm") }
     private val timePicker by lazy {
@@ -134,7 +134,7 @@ class DetailsFragment : BottomSheetDialogFragment() {
         }
     }
 
-    private val ISchedulerModel.repeatMode: RepeatMode
+    private val IScheduleModel.repeatMode: RepeatMode
         get() = (this as? DailyTaskModel)?.repeatMode ?: (this as? CreateTaskModel)?.repeatMode
         ?: RepeatMode.Never
 }

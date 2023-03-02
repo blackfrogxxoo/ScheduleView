@@ -1,34 +1,34 @@
-package me.wxc.widget.scheduler.components
+package me.wxc.widget.schedule.components
 
 import android.graphics.*
-import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISchedulerComponent
-import me.wxc.widget.base.ISchedulerEditable
-import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.IScheduleComponent
+import me.wxc.widget.base.IScheduleEditable
+import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.tools.*
 import kotlin.math.roundToInt
 
-class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerComponent<DailyTaskModel>,
-    ISchedulerEditable {
+class DailyTaskComponent(override var model: DailyTaskModel) : IScheduleComponent<DailyTaskModel>,
+    IScheduleEditable {
     override val drawingRect: RectF = originRect()
     override val originRect: RectF = originRect()
     private val bgColor = if (model.expired) {
-        SchedulerConfig.colorBlue5
+        ScheduleConfig.colorBlue5
     } else {
-        SchedulerConfig.colorBlue4
+        ScheduleConfig.colorBlue4
     }
     private val textColor = if (model.expired) {
-        SchedulerConfig.colorBlue2
+        ScheduleConfig.colorBlue2
     } else {
-        SchedulerConfig.colorBlue1
+        ScheduleConfig.colorBlue1
     }
     private val circleRadius = 4f.dp
     private val circlePadding = 20f.dp
 
     private val shader: Shader
         get() = run {
-            val color1 = SchedulerConfig.colorTransparent1
+            val color1 = ScheduleConfig.colorTransparent1
             val color2 = bgColor
             val colors = intArrayOf(color1, color1, color2, color2)
             val positions = floatArrayOf(0f, 0.5f, 0.5f, 1.0f)
@@ -98,7 +98,7 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
     }
 
     private fun drawUpdatingRect(canvas: Canvas, paint: Paint, drawRect: RectF) {
-        paint.color = SchedulerConfig.colorBlue1
+        paint.color = ScheduleConfig.colorBlue1
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 0.5f.dp
         canvas.drawRoundRect(
@@ -111,10 +111,10 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
             paint
         )
         paint.style = Paint.Style.FILL
-        paint.color = SchedulerConfig.colorWhite
+        paint.color = ScheduleConfig.colorWhite
         canvas.drawCircle(drawRect.right - circlePadding, drawRect.top, circleRadius, paint)
         canvas.drawCircle(drawRect.left + circlePadding, drawRect.bottom, circleRadius, paint)
-        paint.color = SchedulerConfig.colorBlue1
+        paint.color = ScheduleConfig.colorBlue1
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 2f.dp
         canvas.drawCircle(drawRect.right - circlePadding, drawRect.top, circleRadius, paint)
@@ -129,13 +129,13 @@ class DailyTaskComponent(override var model: DailyTaskModel) : ISchedulerCompone
         drawingRect.bottom = originRect.bottom + anchorPoint.y
     }
 
-    override fun setCoincidedScheduleModels(coincided: List<ISchedulerModel>) {
+    override fun setCoincidedScheduleModels(coincided: List<IScheduleModel>) {
         if (coincided.isNotEmpty()) {
             // TODO 优化时间冲突的日程UI
             val index = coincided.indexOf(model)
             val size = coincided.size
-            val padding = (70f.dp / size).coerceAtLeast(20f.dp)
-            val width = dayWidth - padding
+            val padding = 15f.dp
+            val width = (dayWidth - (size - 1) * padding).coerceAtLeast(50f.dp)
             if (originRect.width().roundToInt() == dayWidth.roundToInt()) {
                 val originR = originRect.right
                 originRect.left = (originRect.left + index * padding).coerceAtMost(originR - 50f.dp)
@@ -152,7 +152,7 @@ data class DailyTaskModel(
     var title: String,
     var repeatId: String,
     var repeatMode: RepeatMode = RepeatMode.Never
-) : ISchedulerModel {
+) : IScheduleModel {
     override val endTime: Long
         get() = startTime + duration
 

@@ -1,12 +1,12 @@
-package me.wxc.widget.scheduler.components
+package me.wxc.widget.schedule.components
 
 import android.graphics.*
-import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.base.ISchedulerComponent
-import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.IScheduleComponent
+import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.tools.*
 
-class ClockLineComponent(override var model: ClockLineModel) : ISchedulerComponent<ClockLineModel> {
+class ClockLineComponent(override var model: ClockLineModel) : IScheduleComponent<ClockLineModel> {
     override val originRect: RectF = originRect().apply {
         left = 0f
         right = parentWidth.toFloat()
@@ -33,12 +33,12 @@ class ClockLineComponent(override var model: ClockLineModel) : ISchedulerCompone
         parentHeight = canvas.height
         canvas.save()
         canvas.clipRect(0f, dateLineHeight, parentWidth.toFloat(), parentHeight.toFloat())
-        paint.color = SchedulerConfig.colorBlack4
+        paint.color = ScheduleConfig.colorBlack4
         paint.textSize = 12f.dp
         val startX = 12f.dp
         val y = drawingRect.top
         canvas.drawText(model.showText, startX, y + 4f.dp, paint)
-        paint.color = SchedulerConfig.colorBlack4
+        paint.color = ScheduleConfig.colorBlack4
         paint.strokeWidth = 1f
         val stopX = parentWidth.toFloat()
         paint.pathEffect = pathEffect
@@ -64,7 +64,7 @@ class ClockLineComponent(override var model: ClockLineModel) : ISchedulerCompone
                 drawingRect.top + dayHeight * (adjustedEndTime - startOfDay(adjustedEndTime).timeInMillis - model.startTime + startOfDay(
                     model.startTime
                 ).timeInMillis) / (hourMillis * 24)
-            paint.color = SchedulerConfig.colorBlue1
+            paint.color = ScheduleConfig.colorBlue1
             if (createTop >= drawingRect.top && createTop < drawingRect.bottom && model.clock != 24) {
                 canvas.drawText(adjustedStartTime.hhMM, startX, createTop + 4f.dp, paint)
             }
@@ -87,7 +87,7 @@ class ClockLineComponent(override var model: ClockLineModel) : ISchedulerCompone
 data class ClockLineModel(
     val clock: Int,
     var createTaskModel: CreateTaskModel? = null
-) : ISchedulerModel {
+) : IScheduleModel {
     private val zeroClock = startOfDay()
     override val startTime: Long = zeroClock.timeInMillis + clock * hourMillis
     override val endTime: Long = zeroClock.timeInMillis + (clock + 1) * hourMillis

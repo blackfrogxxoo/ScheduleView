@@ -1,4 +1,4 @@
-package me.wxc.widget.scheduler
+package me.wxc.widget.schedule
 
 import android.animation.ValueAnimator
 import android.util.Log
@@ -10,31 +10,31 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.Scroller
 import androidx.core.view.doOnLayout
 import kotlinx.coroutines.launch
-import me.wxc.widget.SchedulerConfig
-import me.wxc.widget.SchedulerConfig.lifecycleScope
-import me.wxc.widget.base.ISchedulerRender
-import me.wxc.widget.base.ISchedulerTaskCreator
-import me.wxc.widget.base.ISchedulerWidget
-import me.wxc.widget.base.ISchedulerWidget.Companion.TAG
-import me.wxc.widget.scheduler.components.CreateTaskComponent
-import me.wxc.widget.scheduler.components.DailyTaskComponent
+import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.ScheduleConfig.lifecycleScope
+import me.wxc.widget.base.IScheduleRender
+import me.wxc.widget.base.IScheduleCreator
+import me.wxc.widget.base.IScheduleWidget
+import me.wxc.widget.base.IScheduleWidget.Companion.TAG
+import me.wxc.widget.schedule.components.CreateTaskComponent
+import me.wxc.widget.schedule.components.DailyTaskComponent
 import me.wxc.widget.tools.*
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
-class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget {
+class ScheduleWidget(override val render: IScheduleRender) : IScheduleWidget {
     private val MIN_SCROLL_Y = 0
     private val MAX_SCROLL_Y: Int
         get() = dayHeight.roundToInt() + dateLineHeight.roundToInt() - (render as View).height + (render as View).paddingTop + (render as View).paddingBottom
     private val MIN_SCROLL_X: Int
-        get() = (dayWidth * (SchedulerConfig.schedulerStartTime.dDays - System.currentTimeMillis().dDays)).roundToInt()
+        get() = (dayWidth * (ScheduleConfig.scheduleStartTime.dDays - System.currentTimeMillis().dDays)).roundToInt()
     private val MAX_SCROLL_X: Int
-        get() = (dayWidth * (SchedulerConfig.schedulerEndTime.dDays - System.currentTimeMillis().dDays)).roundToInt()
+        get() = (dayWidth * (ScheduleConfig.scheduleEndTime.dDays - System.currentTimeMillis().dDays)).roundToInt()
 
-    override var renderRange: ISchedulerWidget.RenderRange by Delegates.observable(ISchedulerWidget.RenderRange.ThreeDayRange) { _, _, value ->
+    override var renderRange: IScheduleWidget.RenderRange by Delegates.observable(IScheduleWidget.RenderRange.ThreeDayRange) { _, _, value ->
         val temp = isThreeDay
-        isThreeDay = value is ISchedulerWidget.RenderRange.ThreeDayRange
+        isThreeDay = value is IScheduleWidget.RenderRange.ThreeDayRange
         if (temp && !isThreeDay) { // 三日 -> 单日
             scrollX *= 3
         } else if (!temp && isThreeDay) { // 单日 -> 三日
@@ -46,7 +46,7 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
 
     override var selectedDayTime: Long
         set(value) {
-            (render as? ISchedulerTaskCreator)?.removeCreateTask()
+            (render as? IScheduleCreator)?.removeCreateTask()
             scrollTo((dayWidth * value.dDays).roundToInt(), initializedY())
         }
         get() = startOfDay().timeInMillis + dDays * dayMillis
@@ -57,7 +57,7 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
         set(value) {
             field = value
             if (scroller.isFinished) {
-                SchedulerConfig.onDateSelectedListener.invoke(startOfDay(selectedDayTime))
+                ScheduleConfig.onDateSelectedListener.invoke(startOfDay(selectedDayTime))
             }
         }
     private var scrollY: Int = 0
@@ -73,7 +73,7 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
     private var scrollHorizontal = false
 
     init {
-        isThreeDay = renderRange is ISchedulerWidget.RenderRange.ThreeDayRange
+        isThreeDay = renderRange is IScheduleWidget.RenderRange.ThreeDayRange
         render.widget = this
         (render as View).doOnLayout {
             scrollY = initializedY()
@@ -81,9 +81,9 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
         }
         lifecycleScope.launch {
             render.adapter.models.addAll(
-                SchedulerConfig.schedulerModelsProvider.invoke(
-                    SchedulerConfig.schedulerStartTime,
-                    SchedulerConfig.schedulerEndTime
+                ScheduleConfig.scheduleModelsProvider.invoke(
+                    ScheduleConfig.scheduleStartTime,
+                    ScheduleConfig.scheduleEndTime
                 )
             )
             Log.i(TAG, "notify models changed")
@@ -115,13 +115,13 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
                         render.adapter.visibleComponent.mapNotNull { it as? DailyTaskComponent }
                             .find { e.ifInRect(it.drawingRect) }
                     clickedTask?.let {
-                        SchedulerConfig.onDailyTaskClickBlock(it.model)
+                        ScheduleConfig.onDailyTaskClickBlock(it.model)
                         return true
                     }
                     val downOnBody = e.x > clockWidth && e.y > dateLineHeight
                     if (downOnBody
                         && !removingCreateTask
-                        && (render as? ISchedulerTaskCreator)?.addCreateTask(e) == true
+                        && (render as? IScheduleCreator)?.addCreateTask(e) == true
                     ) {
                         onScroll(scrollX, scrollY)
                     }
@@ -159,7 +159,7 @@ class SchedulerWidget(override val render: ISchedulerRender) : ISchedulerWidget 
             removingCreateTask = false
             createTaskComponent?.let {
                 if (!downOnCreate) {
-                    (render as? ISchedulerTaskCreator)?.removeCreateTask()
+                    (render as? IScheduleCreator)?.removeCreateTask()
                     removingCreateTask = true
                 }
             }

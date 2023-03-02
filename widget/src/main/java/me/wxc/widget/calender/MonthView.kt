@@ -16,10 +16,10 @@ import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.RecyclerView
 import me.wxc.widget.R
-import me.wxc.widget.SchedulerConfig
+import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.ICalendarParent
 import me.wxc.widget.base.ICalendarRender
-import me.wxc.widget.base.ISchedulerModel
+import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.tools.*
 import java.util.*
@@ -61,24 +61,24 @@ class MonthView @JvmOverloads constructor(
         dailyTaskListViewGroup.focusedDayTime = time
         if ((parent as? RecyclerView)?.isVisible == true && (parent as? RecyclerView)?.scrollState == RecyclerView.SCROLL_STATE_IDLE) {
             if (time != -1L) {
-                SchedulerConfig.onDateSelectedListener.invoke(startOfDay(time))
+                ScheduleConfig.onDateSelectedListener.invoke(startOfDay(time))
             } else if (System.currentTimeMillis() in (startTime + 1) until endTime) {
-                SchedulerConfig.onDateSelectedListener.invoke(startOfDay())
+                ScheduleConfig.onDateSelectedListener.invoke(startOfDay())
             } else {
-                SchedulerConfig.onDateSelectedListener.invoke(calendar)
+                ScheduleConfig.onDateSelectedListener.invoke(calendar)
             }
         }
     }
-    override var schedulerModels: List<ISchedulerModel> = listOf()
+    override var scheduleModels: List<IScheduleModel> = listOf()
         set(value) {
             field = value
             _children.forEach { child ->
-                child.getSchedulersFrom(value)
+                child.getSchedulesFrom(value)
             }
-            dailyTaskListViewGroup.getSchedulersFrom(value)
+            dailyTaskListViewGroup.getSchedulesFrom(value)
         }
     override var selectedDayTime: Long
-        get() = SchedulerConfig.selectedDayTime
+        get() = ScheduleConfig.selectedDayTime
         set(value) {
             collapseLine = -1
         }
@@ -108,14 +108,14 @@ class MonthView @JvmOverloads constructor(
         updatePadding(top = topPadding.roundToInt())
         dailyTaskListViewGroup = DailyTaskListViewGroup(context).apply {
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-            setBackgroundColor(SchedulerConfig.colorBlack5)
+            setBackgroundColor(ScheduleConfig.colorBlack5)
         }
         addView(dailyTaskListViewGroup)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        paint.color = SchedulerConfig.colorBlack3
+        paint.color = ScheduleConfig.colorBlack3
         val todayWeekDayIndex =
             if (calendar.timeInMillis.dMonths == System.currentTimeMillis().dMonths) {
                 startOfDay().get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
@@ -126,14 +126,14 @@ class MonthView @JvmOverloads constructor(
             val time = startTime + i * dayMillis
             val left = 10f.dp + i * dayWidth
             if (todayWeekDayIndex == i) {
-                paint.color = SchedulerConfig.colorBlue1
+                paint.color = ScheduleConfig.colorBlue1
             }
             canvas.drawText(time.dayOfWeekTextSimple, left, 15f.dp, paint)
             if (todayWeekDayIndex == i) {
-                paint.color = SchedulerConfig.colorBlack3
+                paint.color = ScheduleConfig.colorBlack3
             }
         }
-        paint.color = SchedulerConfig.colorBlack4
+        paint.color = ScheduleConfig.colorBlack4
         paint.strokeWidth = .5f.dp
         canvas.drawLine(
             0f,
@@ -181,7 +181,7 @@ class MonthView @JvmOverloads constructor(
         Log.i(TAG, "onCollapseLineChanged: $old, $new")
         if (old == -1 && new >= 0) {
             dailyTaskListViewGroup.calendar.timeInMillis = startTime + new * 7 * dayMillis
-            dailyTaskListViewGroup.getSchedulersFrom(schedulerModels)
+            dailyTaskListViewGroup.getSchedulesFrom(scheduleModels)
             collapseCenter = paddingTop + (new + 1) * dayHeight
             val destTop = paddingTop + dayHeight
             val destBottom = if (new < _children.size / 7 - 1) {
@@ -206,7 +206,7 @@ class MonthView @JvmOverloads constructor(
             }.start()
         } else if (old >= 0 && new == -1) {
             dailyTaskListViewGroup.calendar.timeInMillis = -1
-            dailyTaskListViewGroup.schedulerModels = emptyList()
+            dailyTaskListViewGroup.scheduleModels = emptyList()
             collapseCenter = paddingTop + (old + 1) * dayHeight
             val startTop = collapseTop
             val startBottom = collapseBottom
@@ -256,8 +256,8 @@ class MonthView @JvmOverloads constructor(
                             -1
                         }
                     }
-                    if (schedulerModels.any()) {
-                        child.getSchedulersFrom(schedulerModels)
+                    if (scheduleModels.any()) {
+                        child.getSchedulesFrom(scheduleModels)
                     }
                 }
             }

@@ -44,8 +44,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <me.wxc.widget.scheduler.SchedulerView
-        android:id="@+id/scheduler_view"
+    <me.wxc.widget.schedule.ScheduleView
+        android:id="@+id/schedule_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

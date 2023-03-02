@@ -5,10 +5,10 @@ import android.graphics.Paint
 import android.graphics.Point
 import android.graphics.RectF
 import android.view.MotionEvent
-import me.wxc.widget.scheduler.components.CreateTaskComponent
+import me.wxc.widget.schedule.components.CreateTaskComponent
 
-interface ISchedulerWidget : ISelectedDayTimeHolder {
-    val render: ISchedulerRender
+interface IScheduleWidget : ISelectedDayTimeHolder {
+    val render: IScheduleRender
     val renderRange: RenderRange
     fun onTouchEvent(motionEvent: MotionEvent): Boolean
     fun onScroll(x: Int, y: Int)
@@ -21,54 +21,54 @@ interface ISchedulerWidget : ISelectedDayTimeHolder {
     }
 
     companion object {
-        val ISchedulerWidget.TAG: String
+        val IScheduleWidget.TAG: String
             get() = this::class.java.simpleName
     }
 }
 
-interface ISchedulerRender {
-    var widget: ISchedulerWidget
+interface IScheduleRender {
+    var widget: IScheduleWidget
     val calendarPosition: Point
-    val adapter: ISchedulerRenderAdapter
+    val adapter: IScheduleRenderAdapter
     fun render(x: Int, y: Int)
 }
 
-interface ISchedulerTaskCreator {
+interface IScheduleCreator {
     fun addCreateTask(motionEvent: MotionEvent): Boolean
     fun removeCreateTask(): Boolean
 }
 
-interface ISchedulerComponent<T : ISchedulerModel> {
+interface IScheduleComponent<T : IScheduleModel> {
     var model: T
     val originRect: RectF
     val drawingRect: RectF
     fun onDraw(canvas: Canvas, paint: Paint)
     fun updateDrawingRect(anchorPoint: Point)
-    fun setCoincidedScheduleModels(coincided: List<ISchedulerModel>) {}
+    fun setCoincidedScheduleModels(coincided: List<IScheduleModel>) {}
     fun onTouchEvent(e: MotionEvent): Boolean = false
 
     companion object {
-        val ISchedulerComponent<*>.TAG: String
+        val IScheduleComponent<*>.TAG: String
             get() = this::class.java.simpleName
     }
 }
 
-interface ISchedulerRenderAdapter {
-    var models: MutableList<ISchedulerModel>
-    val modelsGroupByDay: MutableMap<Int, List<ISchedulerModel>>
-    val fixedComponents: List<ISchedulerComponent<*>>
-    val visibleComponent: List<ISchedulerComponent<*>>
+interface IScheduleRenderAdapter {
+    var models: MutableList<IScheduleModel>
+    val modelsGroupByDay: MutableMap<Int, List<IScheduleModel>>
+    val fixedComponents: List<IScheduleComponent<*>>
+    val visibleComponent: List<IScheduleComponent<*>>
     var createTaskComponent: CreateTaskComponent?
-    fun onCreateComponent(model: ISchedulerModel): ISchedulerComponent<*>?
+    fun onCreateComponent(model: IScheduleModel): IScheduleComponent<*>?
     fun notifyModelsChanged()
-    fun notifyModelAdded(model: ISchedulerModel)
-    fun notifyModelRemoved(model: ISchedulerModel)
+    fun notifyModelAdded(model: IScheduleModel)
+    fun notifyModelRemoved(model: IScheduleModel)
 }
 
 // TODO 可编辑逻辑从CreateTaskComponent抽象于此
-interface ISchedulerEditable {
+interface IScheduleEditable {
     val editable: Boolean
     val editingRect: RectF?
 }
 
-interface ISchedulerModel : ITimeRangeHolder, java.io.Serializable
+interface IScheduleModel : ITimeRangeHolder, java.io.Serializable
