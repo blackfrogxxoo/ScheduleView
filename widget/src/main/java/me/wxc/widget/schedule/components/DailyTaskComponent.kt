@@ -6,6 +6,10 @@ import me.wxc.widget.base.IScheduleComponent
 import me.wxc.widget.base.IScheduleEditable
 import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.base.RepeatMode
+import me.wxc.widget.schedule.clockWidth
+import me.wxc.widget.schedule.dateLineHeight
+import me.wxc.widget.schedule.dayWidth
+import me.wxc.widget.schedule.originRect
 import me.wxc.widget.tools.*
 import kotlin.math.roundToInt
 

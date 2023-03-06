@@ -3,6 +3,10 @@ package me.wxc.widget.schedule.components
 import android.graphics.*
 import me.wxc.widget.base.IScheduleComponent
 import me.wxc.widget.base.IScheduleModel
+import me.wxc.widget.schedule.clockWidth
+import me.wxc.widget.schedule.dateLineHeight
+import me.wxc.widget.schedule.originRect
+import me.wxc.widget.schedule.refreshRect
 import me.wxc.widget.tools.*
 
 class NowLineComponent(override var model: NowLineModel) : IScheduleComponent<NowLineModel> {

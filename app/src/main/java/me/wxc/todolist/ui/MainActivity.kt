@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.PopupMenu
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.PagerSnapHelper
@@ -14,6 +15,8 @@ import me.wxc.todolist.App
 import me.wxc.todolist.R
 import me.wxc.todolist.databinding.ActivityMainBinding
 import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.CalendarMode
+import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.IScheduleWidget
 import me.wxc.widget.base.RepeatMode
 import me.wxc.widget.calender.MonthAdapter
@@ -43,8 +46,12 @@ class MainActivity : AppCompatActivity() {
         binding.today.setOnClickListener {
             if (binding.scheduleView.isVisible) {
                 calendarWidget.selectedDayTime = startOfDay().timeInMillis
-            } else {
+            } else if (binding.monthViewList.isVisible) {
                 monthAdapter.selectedDayTime = startOfDay().timeInMillis
+            } else {
+                binding.flowGroup.children.filterIsInstance<ICalendarRender>().forEach {
+                   it.focusedDayTime = -1
+                }
             }
         }
         binding.fab.setOnClickListener {
@@ -63,6 +70,7 @@ class MainActivity : AppCompatActivity() {
                             val fromMonth = binding.monthViewList.visibility == View.VISIBLE
                             binding.scheduleView.visibility = View.VISIBLE
                             binding.monthViewList.visibility = View.GONE
+                            binding.flowGroup.visibility = View.GONE
                             calendarWidget.renderRange = IScheduleWidget.RenderRange.ThreeDayRange
                             if (fromMonth) {
                                 calendarWidget.selectedDayTime =
@@ -73,6 +81,7 @@ class MainActivity : AppCompatActivity() {
                             val fromMonth = binding.monthViewList.visibility == View.VISIBLE
                             binding.scheduleView.visibility = View.VISIBLE
                             binding.monthViewList.visibility = View.GONE
+                            binding.flowGroup.visibility = View.GONE
                             calendarWidget.renderRange = IScheduleWidget.RenderRange.SingleDayRange
                             if (fromMonth) {
                                 calendarWidget.selectedDayTime =
@@ -83,12 +92,17 @@ class MainActivity : AppCompatActivity() {
                             val fromDay = binding.scheduleView.visibility == View.VISIBLE
                             binding.scheduleView.visibility = View.GONE
                             binding.monthViewList.visibility = View.VISIBLE
+                            binding.flowGroup.visibility = View.GONE
                             if (fromDay) {
                                 monthAdapter.selectedDayTime =
                                     startOfDay(ScheduleConfig.selectedDayTime).timeInMillis
                             }
                         }
-                        else -> {}
+                        else -> {
+                            binding.scheduleView.visibility = View.GONE
+                            binding.monthViewList.visibility = View.GONE
+                            binding.flowGroup.visibility = View.VISIBLE
+                        }
                     }
                     true
                 }

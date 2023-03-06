@@ -5,6 +5,9 @@ import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.IScheduleComponent
 import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.schedule.ScheduleWidget
+import me.wxc.widget.schedule.clockWidth
+import me.wxc.widget.schedule.dateLineHeight
+import me.wxc.widget.schedule.xToDDays
 import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.math.abs

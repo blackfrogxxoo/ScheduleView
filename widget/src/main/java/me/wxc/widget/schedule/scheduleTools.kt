@@ -1,10 +1,10 @@
-package me.wxc.widget.tools
+package me.wxc.widget.schedule
 
 import android.graphics.Point
 import android.graphics.RectF
 import me.wxc.widget.base.IScheduleComponent
 import me.wxc.widget.base.IScheduleModel
-import me.wxc.widget.schedule.ScheduleWidget
+import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong

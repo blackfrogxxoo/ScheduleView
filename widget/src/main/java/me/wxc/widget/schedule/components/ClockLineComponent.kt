@@ -4,6 +4,7 @@ import android.graphics.*
 import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.IScheduleComponent
 import me.wxc.widget.base.IScheduleModel
+import me.wxc.widget.schedule.*
 import me.wxc.widget.tools.*
 
 class ClockLineComponent(override var model: ClockLineModel) : IScheduleComponent<ClockLineModel> {

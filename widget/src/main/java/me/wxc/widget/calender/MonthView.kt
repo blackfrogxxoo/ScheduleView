@@ -55,7 +55,7 @@ class MonthView @JvmOverloads constructor(
         } else {
             -1
         }
-        children.forEach {
+        childRenders.forEach {
             it.focusedDayTime = time
         }
         dailyTaskListViewGroup.focusedDayTime = time
@@ -82,7 +82,7 @@ class MonthView @JvmOverloads constructor(
         set(value) {
             collapseLine = -1
         }
-    override val children: List<ICalendarRender>
+    override val childRenders: List<ICalendarRender>
         get() = _children.toList()
 
     private val _children = mutableListOf<ICalendarRender>().apply {

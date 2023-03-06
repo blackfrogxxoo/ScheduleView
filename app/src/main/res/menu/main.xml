@@ -10,6 +10,9 @@
     <item
         android:id="@+id/month"
         android:title="单月" />
+    <item
+        android:id="@+id/flow"
+        android:title="列表" />
 
 
 </menu>
