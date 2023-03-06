@@ -17,6 +17,7 @@ import me.wxc.widget.ScheduleConfig.lifecycleScope
 import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.tools.TAG
 import me.wxc.widget.tools.dMonths
+import me.wxc.widget.tools.dayMillis
 import me.wxc.widget.tools.startOfDay
 import java.util.Calendar
 
@@ -94,7 +95,7 @@ class MonthAdapter(private val recyclerView: RecyclerView) : RecyclerView.Adapte
             monthView.scheduleModels = withContext(Dispatchers.IO) {
                 ScheduleConfig.scheduleModelsProvider.invoke(
                     monthView.startTime,
-                    monthView.endTime
+                    monthView.endTime + dayMillis
                 )
             }.apply {
                 Log.i(monthView.TAG, "$this")

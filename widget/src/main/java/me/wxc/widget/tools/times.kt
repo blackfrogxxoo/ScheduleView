@@ -40,6 +40,9 @@ val Long.monthOfYear: Int
 val Long.calendar: Calendar
     get() = Calendar.getInstance().apply { timeInMillis = this@calendar }
 
+val Long.dayOfWeek: Int
+    get() = calendar.get(Calendar.DAY_OF_WEEK)
+
 val Long.dayOfMonth: Int
     get() = calendar.get(Calendar.DAY_OF_MONTH)
 

@@ -63,7 +63,7 @@ class FlowHeaderView @JvmOverloads constructor(
 
     private val dayWidth: Float = screenWidth / 7f
     private val dayHeight: Float
-        get() = 40f.dp
+        get() = flowHeaderDayHeight
     private val weekCount: Int
         get() = (1 + endTime.dDays - startTime.dDays).toInt() / 7
     private val isMonthMode: Boolean
@@ -76,24 +76,21 @@ class FlowHeaderView @JvmOverloads constructor(
         }
 
     override var calendarMode: CalendarMode by Delegates.observable(CalendarMode.WeekMode) { _, _, mode ->
-        if (mode is CalendarMode.WeekMode) {
-            translationY = 0f
+        translationY = if (mode is CalendarMode.WeekMode) {
+            0f
         } else {
             val fraction = (mode as CalendarMode.MonthMode).expandFraction
-            translationY = (-focusedLineIndex * (1 - fraction) * dayHeight).apply {
+            (-focusedLineIndex * (1 - fraction) * dayHeight).apply {
                 Log.i(TAG, "translation y : $fraction, $this")
             }
         }
-//        requestLayout()
     }
 
 
     override val childRenders: List<ICalendarRender>
         get() = _children.toList()
 
-    private val _children = mutableListOf<ICalendarRender>().apply {
-    }
-
+    private val _children = mutableListOf<ICalendarRender>()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
@@ -112,7 +109,7 @@ class FlowHeaderView @JvmOverloads constructor(
             val dDays = calendar.timeInMillis.dDays - startTime.dDays
             val line = dDays / 7
             val left = dDays % 7 * dayWidth
-            var top = paddingTop + line * dayHeight
+            val top = paddingTop + line * dayHeight
             val right = left + dayWidth
             val bottom = top + dayHeight
             if (top.isNaN()) continue
@@ -127,7 +124,6 @@ class FlowHeaderView @JvmOverloads constructor(
 
     private fun calculateHeight(): Int {
         return (weekCount * dayHeight).roundToInt()
-//        return (weekHeight + (weekCount * weekHeight - weekHeight) * (1f - collapseFraction)).roundToInt()
     }
 
 

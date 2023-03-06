@@ -45,13 +45,9 @@ class FlowHeaderGroup @JvmOverloads constructor(
         get() = children.filterIsInstance<ICalendarRender>().toList()
     override var calendarMode: CalendarMode by Delegates.observable(CalendarMode.WeekMode) { _, oldMode, mode ->
         if (oldMode is CalendarMode.MonthMode && mode is CalendarMode.MonthMode) {
-            onMonthModeExpandFraction(mode.expandFraction)
+            onExpandFraction(mode.expandFraction)
         }
-        childRenders.filterIsInstance<ICalendarModeHolder>().forEach {
-            it.calendarMode = mode
-        }
-        adapter?.notifyDataSetChanged()
-        scrollToPosition((if (focusedDayTime == -1L) System.currentTimeMillis() else focusedDayTime).parseIndex())
+        onCalendarModeSet(mode)
     }
 
     private val isMonthMode: Boolean
@@ -94,6 +90,8 @@ class FlowHeaderGroup @JvmOverloads constructor(
         }
     }
 
+    private var autoSwitchingMode = false
+
     init {
         layoutManager = LinearLayoutManager(context, HORIZONTAL, false)
         PagerSnapHelper().attachToRecyclerView(this)
@@ -118,19 +116,36 @@ class FlowHeaderGroup @JvmOverloads constructor(
                             }
                         }.start()
                     }
-                    ScheduleConfig.onDateSelectedListener.invoke(
-                        if (isMonthMode) {
-                            startOfDay(startTime).apply {
-                                add(Calendar.MONTH, position)
-                            }
-                        } else {
-                            val startWeekDay = startOfDay(startTime).apply {
-                                timeInMillis -= (get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY) * dayMillis
-                            }.timeInMillis
-                            startOfDay(startWeekDay).apply {
-                                timeInMillis += position * 7 * dayMillis
+                    (llm.findViewByPosition(position) as? ICalendarRender)?.let {
+                        val startTime =
+                            if (isMonthMode) it.calendar.firstDayOfMonthTime else it.startTime
+                        val endTime =
+                            if (isMonthMode) it.calendar.lastDayOfMonthTime else it.endTime
+                        if (focusedDayTime < startTime || focusedDayTime > endTime) {
+                            focusedDayTime =
+                                if (System.currentTimeMillis() in it.startTime..it.endTime) {
+                                    startOfDay().timeInMillis
+                                } else if (isMonthMode) {
+                                    startTime
+                                } else {
+                                    startTime.calendar.apply {
+                                        set(Calendar.DAY_OF_WEEK, focusedDayTime.dayOfWeek)
+                                    }.timeInMillis
+                                }
+                        }
+                        ScheduleConfig.lifecycleScope.launch {
+                            it.scheduleModels = withContext(Dispatchers.IO) {
+                                ScheduleConfig.scheduleModelsProvider.invoke(
+                                    it.startTime,
+                                    it.endTime + dayMillis
+                                )
+                            }.apply {
+                                Log.i(TAG, "$this")
                             }
                         }
+                    }
+                    ScheduleConfig.onDateSelectedListener.invoke(
+                        focusedDayTime.calendar
                     )
                 }
             }
@@ -139,46 +154,47 @@ class FlowHeaderGroup @JvmOverloads constructor(
     }
 
     internal fun autoSwitchMode(mode: CalendarMode) {
+        if (autoSwitchingMode) return
         Log.i(TAG, "autoSwitchMode: $calendarMode -> $mode")
-        if (mode is CalendarMode.MonthMode) {
-            if (calendarMode is CalendarMode.WeekMode) {
-                calendarMode = CalendarMode.MonthMode(0f)
+        if (mode is CalendarMode.MonthMode && calendarMode is CalendarMode.WeekMode) {
+            calendarMode = CalendarMode.MonthMode(0f)
+        }
+        val targetFraction = if (mode is CalendarMode.MonthMode) 1f else 0f
+        ValueAnimator.ofFloat(
+            (calendarMode as CalendarMode.MonthMode).expandFraction,
+            targetFraction
+        ).apply {
+            duration = 100
+            addUpdateListener {
+                calendarMode =
+                    (calendarMode as CalendarMode.MonthMode).copy(expandFraction = it.animatedValue as Float)
             }
-            ValueAnimator.ofFloat((calendarMode as CalendarMode.MonthMode).expandFraction, 1f)
-                .apply {
-                    addUpdateListener {
-                        calendarMode =
-                            (calendarMode as CalendarMode.MonthMode).copy(expandFraction = it.animatedValue as Float)
-                    }
-                    doOnStart {
-                        childRenders.filterIsInstance<ICalendarModeHolder>().forEach {
-                            it.calendarMode = mode
-                        }
-                        adapter?.notifyDataSetChanged()
-                        scrollToPosition((if (focusedDayTime == -1L) System.currentTimeMillis() else focusedDayTime).parseIndex())
-                    }
-                }.start()
-        } else {
-            ValueAnimator.ofFloat((calendarMode as CalendarMode.MonthMode).expandFraction, 0f)
-                .apply {
-                    addUpdateListener {
-                        calendarMode =
-                            (calendarMode as CalendarMode.MonthMode).copy(expandFraction = it.animatedValue as Float)
-                    }
-                    doOnEnd {
-                        calendarMode = mode
-                        childRenders.filterIsInstance<ICalendarModeHolder>().forEach {
-                            it.calendarMode = mode
-                        }
-                        adapter?.notifyDataSetChanged()
-                        scrollToPosition((if (focusedDayTime == -1L) System.currentTimeMillis() else focusedDayTime).parseIndex())
-                    }
-                }.start()
+            doOnStart {
+                autoSwitchingMode = true
+                if (mode is CalendarMode.MonthMode) {
+                    onCalendarModeSet(mode)
+                }
+            }
+            doOnEnd {
+                autoSwitchingMode = false
+                if (mode is CalendarMode.WeekMode) {
+                    calendarMode = mode
+                }
+            }
+        }.start()
+    }
+
+    private fun onCalendarModeSet(mode: CalendarMode) {
+        childRenders.filterIsInstance<ICalendarModeHolder>().forEach {
+            it.calendarMode = mode
+        }
+        if (mode is CalendarMode.WeekMode || (mode as? CalendarMode.MonthMode)?.expandFraction == 0f) {
+            adapter?.notifyDataSetChanged()
+            scrollToPosition((if (focusedDayTime == -1L) System.currentTimeMillis() else focusedDayTime).parseIndex())
         }
     }
 
-
-    private fun onMonthModeExpandFraction(fraction: Float) {
+    private fun onExpandFraction(fraction: Float) {
         val dayHeight: Float = flowHeaderDayHeight
         val calendar = ScheduleConfig.selectedDayTime.calendar
         val monthStart = startOfDay(calendar.firstDayOfMonthTime).apply {
@@ -190,7 +206,12 @@ class FlowHeaderGroup @JvmOverloads constructor(
         val weekCount: Int = (1 + monthEnd.dDays - monthStart.dDays).toInt() / 7
         val expandHeight = weekCount * dayHeight
         val collapseHeight = dayHeight
-        Log.i(TAG, "onMonthModeExpandFraction: $fraction, $weekCount, ${sdf_yyyyMMddHHmmss.format(monthStart)}")
+        Log.i(
+            TAG,
+            "onMonthModeExpandFraction: $fraction, $weekCount, ${
+                sdf_yyyyMMddHHmmss.format(monthStart)
+            }"
+        )
         updateLayoutParams {
             height = (collapseHeight + (expandHeight - collapseHeight) * fraction).roundToInt()
         }
@@ -215,16 +236,6 @@ class FlowHeaderGroup @JvmOverloads constructor(
                     }.timeInMillis
                 this.focusedDayTime = this@FlowHeaderGroup.focusedDayTime
                 this.calendarMode = this@FlowHeaderGroup.calendarMode
-                ScheduleConfig.lifecycleScope.launch {
-                    scheduleModels = withContext(Dispatchers.IO) {
-                        ScheduleConfig.scheduleModelsProvider.invoke(
-                            startTime,
-                            endTime
-                        )
-                    }.apply {
-                        Log.i(TAG, "$this")
-                    }
-                }
             }
         }
 
