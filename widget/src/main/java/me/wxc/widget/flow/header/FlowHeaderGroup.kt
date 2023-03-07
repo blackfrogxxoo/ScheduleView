@@ -1,4 +1,4 @@
-package me.wxc.widget.flow
+package me.wxc.widget.flow.header
 
 import android.animation.ValueAnimator
 import android.content.Context
@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.*
+import me.wxc.widget.flow.flowHeaderDayHeight
 import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.math.roundToInt

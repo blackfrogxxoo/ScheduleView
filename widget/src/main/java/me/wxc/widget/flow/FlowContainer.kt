@@ -9,9 +9,21 @@ import android.view.ViewConfiguration
 import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import me.wxc.widget.R
+import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.CalendarMode
+import me.wxc.widget.flow.header.FlowHeaderGroup
+import me.wxc.widget.flow.list.FlowListItemModel
+import me.wxc.widget.flow.list.FlowListView
 import me.wxc.widget.tools.TAG
+import me.wxc.widget.tools.calendar
+import me.wxc.widget.tools.firstDayOfMonthTime
+import me.wxc.widget.tools.startOfDay
+import java.util.Calendar
 import kotlin.math.abs
 
 class FlowContainer @JvmOverloads constructor(
@@ -46,6 +58,29 @@ class FlowContainer @JvmOverloads constructor(
                 flowHeader.autoSwitchMode(CalendarMode.MonthMode(1f))
             }
         }
+        ScheduleConfig.lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                delay(1000)
+                val startTime = startOfDay().firstDayOfMonthTime
+                val endTime = startOfDay(startTime).apply { add(Calendar.MONTH, 12) }.timeInMillis
+                val list = ScheduleConfig.scheduleModelsProvider.invoke(startTime, endTime).toMutableList().apply {
+                    Log.i(TAG, "add: $this")
+                }.groupBy { it.startTime.calendar.get(Calendar.MONTH) }
+                Log.i(TAG, "add: $startTime $endTime $list")
+                list.entries.mapIndexed { index, it ->
+                    Log.i(TAG, "add: map: $index $startTime $endTime $list")
+                    FlowListItemModel(
+                        startTime = startOfDay().firstDayOfMonthTime.calendar.apply { add(Calendar.MONTH, index) }.timeInMillis,
+                        endTime = startOfDay().firstDayOfMonthTime.calendar.apply { add(Calendar.MONTH, index + 1) }.timeInMillis,
+                        it.value.toMutableList()
+                    )
+                }.apply {
+                    Log.i(TAG, "add: ${this.size}, $this ")
+                    (scheduleList.adapter as FlowListView.Adapter).submitList(this)
+                }
+            }
+        }
+
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

@@ -6,22 +6,27 @@
     android:orientation="vertical"
     tools:parentTag="android.widget.LinearLayout">
 
-    <me.wxc.widget.flow.FlowHeaderGroup
+    <me.wxc.widget.flow.header.FlowHeaderGroup
         android:id="@+id/flowHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
-    <ImageView
-        android:id="@+id/flowHeaderArrow"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="20dp"
-        android:rotation="180"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_up_arrow" />
+        android:layout_height="25dp"
+        android:paddingBottom="4dp"
+        android:background="@drawable/bg_flow_header">
+        <ImageView
+            android:id="@+id/flowHeaderArrow"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:rotation="180"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_up_arrow"/>
+    </FrameLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
+    <me.wxc.widget.flow.list.FlowListView
         android:id="@+id/scheduleList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/black5" />
+        android:layout_height="match_parent" />
 </merge>

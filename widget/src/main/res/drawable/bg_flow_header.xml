@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="ResourceName">
+    <item>
+        <shape>
+            <solid
+                android:color="@color/transparent1" />
+        </shape>
+    </item>
+    <item
+        android:gravity="bottom">
+        <shape>
+            <size android:height="4dp" />
+            <gradient android:startColor="@color/transparent1"
+                android:endColor="@color/transparent2"
+                android:angle="90"/>
+        </shape>
+    </item>
+</layer-list>

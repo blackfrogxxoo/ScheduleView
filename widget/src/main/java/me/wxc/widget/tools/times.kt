@@ -8,6 +8,7 @@ import kotlin.math.roundToInt
 val sdf_HHmm = SimpleDateFormat("HH:mm", Locale.ROOT)
 val sdf_yyyyMMddHHmmss = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
 val sdf_yyyyM = SimpleDateFormat("yyyy年M月")
+val sdf_Md = SimpleDateFormat("M月d日")
 
 val quarterMillis = 15 * 60 * 1000L
 val hourMillis = 60 * 60 * 1000L
@@ -86,6 +87,16 @@ val Calendar.firstDayOfMonthTime: Long
 val Calendar.lastDayOfMonthTime: Long
     get() = startOfDay(timeInMillis).apply {
         set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
+    }.timeInMillis
+
+val Calendar.firstDayOfWeekTime: Long
+    get() = startOfDay(timeInMillis).apply {
+        set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+    }.timeInMillis
+
+val Calendar.lastDayOfWeekTime: Long
+    get() = startOfDay(timeInMillis).apply {
+        set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY)
     }.timeInMillis
 
 fun startOfDay(timestamp: Long = System.currentTimeMillis()) = Calendar.getInstance().apply {
