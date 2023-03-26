@@ -6,9 +6,9 @@ import me.wxc.widget.base.IScheduleComponent
 import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.schedule.*
 import me.wxc.widget.tools.*
-import kotlin.math.roundToInt
 
-class DateLineComponent(override var model: DateLineModel) : IScheduleComponent<DateLineModel> {
+class DateLineComponent : IScheduleComponent<DateLineModel> {
+    override val model: DateLineModel = DateLineModel
     override val originRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     override val drawingRect: RectF = RectF(clockWidth, 0f, screenWidth.toFloat(), dateLineHeight)
     private val shadowRect: RectF = RectF(
@@ -39,9 +39,10 @@ class DateLineComponent(override var model: DateLineModel) : IScheduleComponent<
         canvas.clipRect(drawingRect)
         var x = -dayWidth
         while (x >= -dayWidth && x < parentWidth) {
-            val startX = (x + scrollX).roundToInt() / dayWidth.roundToInt() * dayWidth + clockWidth
-            val startTime = startOfDay().timeInMillis + startX.xToDDays * dayMillis
-            val dDays = startX.xToDDays - System.currentTimeMillis().dDays
+            val startX =
+                (x + scrollX) / dayWidth * dayWidth + clockWidth - (x + scrollX) % dayWidth
+            val beginTime = beginOfDay().timeInMillis + startX.xToDDays * dayMillis
+            val dDays = startX.xToDDays - nowMillis.dDays
             paint.color = if (dDays == 0L) {
                 ScheduleConfig.colorBlue1
             } else if (dDays < 0) {
@@ -52,7 +53,7 @@ class DateLineComponent(override var model: DateLineModel) : IScheduleComponent<
             paint.textSize = 20f.dp
             paint.isFakeBoldText = true
             canvas.drawText(
-                startTime.dayOfMonth.toString(),
+                beginTime.dayOfMonth.toString(),
                 startX - scrollX,
                 drawingRect.bottom - 10f.dp,
                 paint
@@ -60,7 +61,7 @@ class DateLineComponent(override var model: DateLineModel) : IScheduleComponent<
             paint.textSize = 12f.dp
             paint.isFakeBoldText = false
             canvas.drawText(
-                startTime.dayOfWeekText,
+                beginTime.dayOfWeekText,
                 startX - scrollX,
                 drawingRect.bottom - 34f.dp,
                 paint
@@ -78,11 +79,11 @@ class DateLineComponent(override var model: DateLineModel) : IScheduleComponent<
     }
 
     override fun updateDrawingRect(anchorPoint: Point) {
-        scrollX = - anchorPoint.x.toFloat()
+        scrollX = -anchorPoint.x.toFloat()
     }
 }
 
 object DateLineModel : IScheduleModel {
-    override var startTime: Long = 0
+    override var beginTime: Long = 0
     override var endTime: Long = 0
 }

@@ -7,66 +7,56 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
-import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.IScheduleModel
-import me.wxc.widget.base.ISelectedDayTimeHolder
-import me.wxc.widget.tools.dDays
-import me.wxc.widget.tools.dayMillis
-import me.wxc.widget.tools.startOfDay
+import me.wxc.widget.tools.*
 import java.util.*
 
 class DailyTaskListViewGroup @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
-) : StableOrientationRecyclerView(context, attrs), ICalendarRender, ISelectedDayTimeHolder {
+) : StableOrientationRecyclerView(context, attrs), ICalendarRender {
     override val parentRender: ICalendarRender
         get() = parent as ICalendarRender
-    override val calendar: Calendar = startOfDay()
-    override val startTime: Long
+    override val calendar: Calendar = beginOfDay()
+    override val beginTime: Long
         get() = calendar.timeInMillis
     override val endTime: Long
         get() = calendar.timeInMillis + 7 * dayMillis
-    override var focusedDayTime: Long = -1L
-        set(value) {
-            if (value >= 0) {
-                val index = value.dDays - startTime.dDays
-                if (field == -1L) {
-                    scrollToPosition(index.toInt())
-                } else {
-                    smoothScrollToPosition(index.toInt())
-                }
-            }
-            field = value
-        }
-    override var scheduleModels: List<IScheduleModel> = listOf()
-        set(value) {
-            field = value
-            adapter = if (startTime == -1L) {
-                null
-            } else {
-                Adapter(scheduleModels).apply {
-                    if (focusedDayTime != -1L) {
-                        val index = focusedDayTime.dDays - startTime.dDays
-                        scrollToPosition(index.toInt())
-                    }
-                }
-            }
-            if (adapter != null && focusedDayTime != -1L) {
-                val index = focusedDayTime.dDays - startTime.dDays
-                smoothScrollToPosition(index.toInt()) // FIXME 增删任务后，不滑动一下显示不出来
-            }
-        }
-
-    override var selectedDayTime: Long
-        get() = ScheduleConfig.selectedDayTime
-        set(value) {
-            val index = value.dDays - startTime.dDays
-            if (focusedDayTime == -1L || focusedDayTime == value) {
+    override var focusedDayTime: Long by setter(-1L) { oldTime, time ->
+        if (time >= 0) {
+            val index = time.dDays - beginTime.dDays
+            if (oldTime == -1L) {
                 scrollToPosition(index.toInt())
             } else {
                 smoothScrollToPosition(index.toInt())
             }
         }
+    }
+    override var scheduleModels: List<IScheduleModel> by setter(listOf()) { _, list ->
+        adapter = if (beginTime == -1L) {
+            null
+        } else {
+            Adapter(scheduleModels).apply {
+                if (focusedDayTime != -1L) {
+                    val index = focusedDayTime.dDays - beginTime.dDays
+                    scrollToPosition(index.toInt())
+                }
+            }
+        }
+        if (adapter != null && focusedDayTime != -1L) {
+            val index = focusedDayTime.dDays - beginTime.dDays
+            smoothScrollToPosition(index.toInt()) // FIXME 增删任务后，不滑动一下显示不出来
+        }
+    }
+
+    override var selectedDayTime: Long by setter(nowMillis) { _, time ->
+        val index = time.dDays - beginTime.dDays
+        if (focusedDayTime == -1L || focusedDayTime == time) {
+            scrollToPosition(index.toInt())
+        } else {
+            smoothScrollToPosition(index.toInt())
+        }
+    }
 
     init {
         layoutManager = LinearLayoutManager(context, HORIZONTAL, false)
@@ -88,7 +78,7 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
                 if (position != -1 && lastPosition != position) {
                     lastPosition = position
                     if (dragged) {
-                        parentRender.focusedDayTime = startTime + position * dayMillis
+                        parentRender.focusedDayTime = beginTime + position * dayMillis
                     }
                     dragged = false
                 }
@@ -112,7 +102,7 @@ class DailyTaskListViewGroup @JvmOverloads constructor(
         override fun getItemCount() = 7
 
         override fun onBindViewHolder(holder: VH, position: Int) {
-            val from = startTime + position * dayMillis
+            val from = beginTime + position * dayMillis
             holder.dailyTaskListView.calendar.timeInMillis = from
             holder.dailyTaskListView.getSchedulesFrom(scheduleModels)
         }

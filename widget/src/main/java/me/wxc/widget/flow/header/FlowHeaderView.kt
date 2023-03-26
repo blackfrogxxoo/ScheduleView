@@ -6,16 +6,15 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.AttributeSet
 import android.util.Log
-import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.children
 import me.wxc.widget.R
-import me.wxc.widget.base.*
 import me.wxc.widget.flow.flowHeaderDayHeight
+import me.wxc.widget.base.*
 import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.math.roundToInt
-import kotlin.properties.Delegates
 
 class FlowHeaderView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -30,34 +29,36 @@ class FlowHeaderView @JvmOverloads constructor(
     }
     override val parentRender: ICalendarRender?
         get() = parent as? ICalendarRender
-    override val calendar: Calendar = startOfDay()
-    override var focusedDayTime: Long by Delegates.observable(-1) { _, _, time ->
-        _children.forEach {
-            it.focusedDayTime = time
-        }
+    override val calendar: Calendar = beginOfDay()
+    override var focusedDayTime: Long by setter(-1) { _, time ->
+        childRenders.forEach { it.focusedDayTime = time }
     }
-    override var scheduleModels: List<IScheduleModel> by Delegates.observable(listOf()) { _, _, list ->
-        _children.forEach {
-            it.getSchedulesFrom(list)
+    override var selectedDayTime: Long by setter(-1) { _, time ->
+        if (focusedDayTime in beginTime..endTime && focusedDayTime.dDays != time.dDays) {
+            parentRender?.focusedDayTime = -1
         }
+        childRenders.forEach { it.selectedDayTime = time }
     }
-    override val startTime: Long
+    override var scheduleModels: List<IScheduleModel> by setter(listOf()) { _, list ->
+        childRenders.forEach { it.getSchedulesFrom(list) }
+    }
+    override val beginTime: Long
         get() = if (isMonthMode) {
-            startOfDay(calendar.firstDayOfMonthTime).apply {
+            beginOfDay(calendar.firstDayOfMonthTime).apply {
                 set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
             }.timeInMillis
         } else {
-            startOfDay(calendar.timeInMillis).apply {
+            beginOfDay(calendar.timeInMillis).apply {
                 set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
             }.timeInMillis
         }
     override val endTime: Long
         get() = if (isMonthMode) {
-            startOfDay(calendar.lastDayOfMonthTime).apply {
+            beginOfDay(calendar.lastDayOfMonthTime).apply {
                 set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY)
             }.timeInMillis
         } else {
-            startOfDay(calendar.timeInMillis).apply {
+            beginOfDay(calendar.timeInMillis).apply {
                 set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY)
             }.timeInMillis
         }
@@ -66,22 +67,22 @@ class FlowHeaderView @JvmOverloads constructor(
     private val dayHeight: Float
         get() = flowHeaderDayHeight
     private val weekCount: Int
-        get() = (1 + endTime.dDays - startTime.dDays).toInt() / 7
+        get() = (1 + endTime.dDays - beginTime.dDays).toInt() / 7
     private val isMonthMode: Boolean
         get() = calendarMode is CalendarMode.MonthMode
-    private val focusedLineIndex: Int
-        get() = if (focusedDayTime != -1L) {
-            ((focusedDayTime - startTime) / (7 * dayMillis)).toInt()
+    private val selectedLineIndex: Int
+        get() = if (selectedDayTime != -1L) {
+            ((selectedDayTime - beginTime) / (7 * dayMillis)).toInt()
         } else {
             0
         }
 
-    override var calendarMode: CalendarMode by Delegates.observable(CalendarMode.WeekMode) { _, _, mode ->
+    override var calendarMode: CalendarMode by setter(CalendarMode.WeekMode) { _, mode ->
         translationY = if (mode is CalendarMode.WeekMode) {
             0f
         } else {
             val fraction = (mode as CalendarMode.MonthMode).expandFraction
-            (-focusedLineIndex * (1 - fraction) * dayHeight).apply {
+            (-selectedLineIndex * (1 - fraction) * dayHeight).apply {
                 Log.i(TAG, "translation y : $fraction, $this")
             }
         }
@@ -89,9 +90,7 @@ class FlowHeaderView @JvmOverloads constructor(
 
 
     override val childRenders: List<ICalendarRender>
-        get() = _children.toList()
-
-    private val _children = mutableListOf<ICalendarRender>()
+        get() = children.filterIsInstance<ICalendarRender>().toList()
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
@@ -100,14 +99,14 @@ class FlowHeaderView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        canvas.drawText(sdf_yyyyMMddHHmmss.format(startTime), width / 2f, height / 2f, paint)
+        canvas.drawText(beginTime.yyyyMMddHHmmss, width / 2f, height / 2f, paint)
     }
 
     override fun onLayout(p0: Boolean, p1: Int, p2: Int, p3: Int, p4: Int) {
         for (index in 0 until childCount) {
             val child = getChildAt(index)
             val calendar = (child as ICalendarRender).calendar
-            val dDays = calendar.timeInMillis.dDays - startTime.dDays
+            val dDays = calendar.timeInMillis.dDays - beginTime.dDays
             val line = dDays / 7
             val left = dDays % 7 * dayWidth
             val top = paddingTop + line * dayHeight
@@ -128,33 +127,19 @@ class FlowHeaderView @JvmOverloads constructor(
     }
 
 
-    override fun onAttachedToWindow() {
+    override fun onAttachedToWindow() { // TODO View复用
         super.onAttachedToWindow()
-        Log.i(
-            TAG,
-            "onAttachedToWindow ${sdf_yyyyMMddHHmmss.format(startTime)} ${
-                sdf_yyyyMMddHHmmss.format(
-                    endTime
-                )
-            }"
-        )
-        if (_children.isEmpty()) {
-            for (time in startTime..endTime step dayMillis) {
-                FlowDayView(context).let { child ->
-                    child.calendar.timeInMillis = time
-                    _children.add(child)
-                    addView(child)
-                    child.focusedDayTime = focusedDayTime
-                    child.setOnClickListener {
-                        parentRender?.focusedDayTime = if (focusedDayTime != child.startTime) {
-                            child.startTime
-                        } else {
-                            -1
-                        }
-                    }
-                    if (scheduleModels.any()) {
-                        child.getSchedulesFrom(scheduleModels)
-                    }
+        for (time in beginTime..endTime step dayMillis) {
+            FlowDayView(context).let { child ->
+                child.calendar.timeInMillis = time
+                addView(child)
+                child.focusedDayTime = focusedDayTime
+                child.selectedDayTime = selectedDayTime
+                child.setOnClickListener {
+                    rootCalendarRender?.focusedDayTime = child.beginTime
+                }
+                if (scheduleModels.any()) {
+                    child.getSchedulesFrom(scheduleModels)
                 }
             }
         }
@@ -162,21 +147,10 @@ class FlowHeaderView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        Log.i(
-            TAG,
-            "onDetachedFromWindow ${sdf_yyyyMMddHHmmss.format(startTime)} ${
-                sdf_yyyyMMddHHmmss.format(
-                    endTime
-                )
-            }"
-        )
-        if (_children.isNotEmpty()) {
-            _children.forEach {
-                this@FlowHeaderView.removeView(it as View)
-            }
-            _children.clear()
-        }
-        focusedDayTime = -1L
+        removeAllViews()
     }
 
+    companion object {
+        private const val TAG = "FlowHeaderView"
+    }
 }

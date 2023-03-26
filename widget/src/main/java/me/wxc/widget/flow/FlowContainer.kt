@@ -5,37 +5,55 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.VelocityTracker
+import android.view.View
 import android.view.ViewConfiguration
 import android.widget.ImageView
 import android.widget.LinearLayout
-import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import androidx.core.view.children
 import me.wxc.widget.R
 import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.CalendarMode
+import me.wxc.widget.base.ICalendarParent
+import me.wxc.widget.base.ICalendarRender
+import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.flow.header.FlowHeaderGroup
-import me.wxc.widget.flow.list.FlowListItemModel
-import me.wxc.widget.flow.list.FlowListView
-import me.wxc.widget.tools.TAG
-import me.wxc.widget.tools.calendar
-import me.wxc.widget.tools.firstDayOfMonthTime
-import me.wxc.widget.tools.startOfDay
-import java.util.Calendar
+import me.wxc.widget.flow.list.ScheduleFlowView
+import me.wxc.widget.tools.*
+import java.util.*
 import kotlin.math.abs
 
 class FlowContainer @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
-) : LinearLayout(context, attrs) {
+) : LinearLayout(context, attrs), ICalendarRender, ICalendarParent {
     private val flowHeader: FlowHeaderGroup
     private val flowHeaderArrow: ImageView
-    private val scheduleList: RecyclerView
+    private val scheduleList: ScheduleFlowView
+
+    override val parentRender: ICalendarRender? = null
+    override val calendar: Calendar = beginOfDay()
+
+    override var scheduleModels: List<IScheduleModel> by setter(listOf())
+    override val beginTime: Long = ScheduleConfig.scheduleBeginTime
+    override val endTime: Long = ScheduleConfig.scheduleBeginTime
+
+    override var focusedDayTime: Long by setter(-1) { _, time ->
+        if (time > 0) {
+            selectedDayTime = time
+        }
+        childRenders.forEach { it.focusedDayTime = time }
+    }
+    override var selectedDayTime: Long by setter(-1) { _, time ->
+        ScheduleConfig.onDateSelectedListener.invoke(time.calendar)
+        childRenders.forEach { it.selectedDayTime = time }
+    }
+
+    override val childRenders: List<ICalendarRender>
+        get() = children.filterIsInstance<ICalendarRender>().toList()
 
     private var downX: Float = 0f
     private var downY: Float = 0f
     private var justDown: Boolean = false
+    private var downTimestamp: Long = 0
     private val touchSlop = ViewConfiguration.getTouchSlop()
     private var intercept = false
     private var fromMonthMode = false
@@ -58,34 +76,33 @@ class FlowContainer @JvmOverloads constructor(
                 flowHeader.autoSwitchMode(CalendarMode.MonthMode(1f))
             }
         }
-        ScheduleConfig.lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                delay(1000)
-                val startTime = startOfDay().firstDayOfMonthTime
-                val endTime = startOfDay(startTime).apply { add(Calendar.MONTH, 12) }.timeInMillis
-                val list = ScheduleConfig.scheduleModelsProvider.invoke(startTime, endTime).toMutableList().apply {
-                    Log.i(TAG, "add: $this")
-                }.groupBy { it.startTime.calendar.get(Calendar.MONTH) }
-                Log.i(TAG, "add: $startTime $endTime $list")
-                list.entries.mapIndexed { index, it ->
-                    Log.i(TAG, "add: map: $index $startTime $endTime $list")
-                    FlowListItemModel(
-                        startTime = startOfDay().firstDayOfMonthTime.calendar.apply { add(Calendar.MONTH, index) }.timeInMillis,
-                        endTime = startOfDay().firstDayOfMonthTime.calendar.apply { add(Calendar.MONTH, index + 1) }.timeInMillis,
-                        it.value.toMutableList()
-                    )
-                }.apply {
-                    Log.i(TAG, "add: ${this.size}, $this ")
-                    (scheduleList.adapter as FlowListView.Adapter).submitList(this)
-                }
-            }
+        val beginTime = beginOfDay().apply { add(Calendar.MONTH, -6) }.timeInMillis
+        val endTime = beginOfDay(beginTime).apply { add(Calendar.MONTH, 12) }.timeInMillis
+        scheduleList.beginTime = beginTime
+        scheduleList.endTime = endTime
+        scheduleList.reloadSchedulesFromProvider {
+            scheduleList.selectedDayTime = beginOfDay().timeInMillis
         }
-
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        return performInterceptTouchEvent(event)
+        Log.i(TAG, "onTouchEvent: $intercept")
+        return performInterceptTouchEvent(event) || super.onTouchEvent(event)
     }
+
+    override fun reloadSchedulesFromProvider(onReload: () -> Unit) {
+        childRenders.forEach { it.reloadSchedulesFromProvider(onReload) }
+    }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        val intercept = performInterceptTouchEvent(ev) || super.onInterceptTouchEvent(ev)
+        Log.i(TAG, "onInterceptTouchEvent: ${ev.action}, $intercept")
+        requestDisallowInterceptTouchEvent(false)
+        return intercept
+    }
+
+    private val headerBottom: Int
+        get() = (flowHeaderArrow.parent as View).bottom
 
     private fun performInterceptTouchEvent(ev: MotionEvent): Boolean {
         velocityTracker.addMovement(ev)
@@ -94,15 +111,19 @@ class FlowContainer @JvmOverloads constructor(
                 downX = ev.x
                 downY = ev.y
                 justDown = true
-                true
+                downTimestamp = nowMillis
+                false
             }
             MotionEvent.ACTION_MOVE -> {
+                if (justDown) {
+                    fromMonthMode = flowHeader.calendarMode is CalendarMode.MonthMode
+                }
                 if (justDown && (abs(downX - ev.x) > touchSlop || abs(downY - ev.y) > touchSlop)) {
                     val moveUp = abs(downX - ev.x) < abs(downY - ev.y) && ev.y < downY
                     val moveDown = abs(downX - ev.x) < abs(downY - ev.y) && ev.y > downY
                     intercept = (moveUp && flowHeader.calendarMode is CalendarMode.MonthMode)
-                            || (moveDown && flowHeader.calendarMode is CalendarMode.WeekMode)
-                    fromMonthMode = intercept && flowHeader.calendarMode is CalendarMode.MonthMode
+                            || (moveDown && downY < headerBottom && flowHeader.calendarMode is CalendarMode.WeekMode)
+                            || (moveDown && downY > headerBottom && flowHeader.calendarMode is CalendarMode.MonthMode)
                     justDown = false
                     Log.i(
                         TAG,
@@ -111,30 +132,28 @@ class FlowContainer @JvmOverloads constructor(
                 }
                 if (intercept) {
                     if (!fromMonthMode && flowHeader.calendarMode is CalendarMode.WeekMode) {
-                        flowHeader.calendarMode = CalendarMode.MonthMode(0f, touching = true)
+                        flowHeader.calendarMode = CalendarMode.MonthMode(0f)
                     }
                     val maxHeight = (6 * flowHeaderDayHeight)
                     if (fromMonthMode) {
-                        flowHeader.calendarMode =
-                            (flowHeader.calendarMode as CalendarMode.MonthMode).copy(
-                                expandFraction = ((maxHeight - downY + ev.y) / maxHeight).coerceAtLeast(
-                                    0f
-                                ).coerceAtMost(1f),
-                                touching = true
-                            )
+                        flowHeader.calendarMode = CalendarMode.MonthMode(
+                            expandFraction = ((maxHeight - downY + ev.y) / maxHeight).apply {
+                                Log.i(TAG, "performInterceptTouchEvent: $this")
+                            }.coerceAtLeast(
+                                0f
+                            ).coerceAtMost(1f),
+                        )
 
                         Log.i(
                             TAG,
                             "onInterceptTouchEvent fraction: ${flowHeader.calendarMode}"
                         )
                     } else {
-                        flowHeader.calendarMode =
-                            (flowHeader.calendarMode as CalendarMode.MonthMode).copy(
-                                expandFraction = ((flowHeaderDayHeight - downY + ev.y) / maxHeight).coerceAtLeast(
-                                    0f
-                                ).coerceAtMost(1f),
-                                touching = true
-                            )
+                        flowHeader.calendarMode = CalendarMode.MonthMode(
+                            expandFraction = ((flowHeaderDayHeight - downY + ev.y) / maxHeight).coerceAtLeast(
+                                0f
+                            ).coerceAtMost(1f),
+                        )
 
                         Log.i(
                             TAG,
@@ -151,9 +170,7 @@ class FlowContainer @JvmOverloads constructor(
                 val velocity = velocityTracker.yVelocity.apply {
                     Log.i(TAG, "velocity: $this")
                 }
-                if (flowHeader.calendarMode is CalendarMode.MonthMode) { // TODO 根据速度方向处理
-                    flowHeader.calendarMode =
-                        (flowHeader.calendarMode as CalendarMode.MonthMode).copy(touching = false)
+                if (intercept && flowHeader.calendarMode is CalendarMode.MonthMode) {
                     val target = if (velocity < -1000) {
                         CalendarMode.WeekMode
                     } else if (velocity > 1000) {
@@ -180,4 +197,7 @@ class FlowContainer @JvmOverloads constructor(
         }
     }
 
+    companion object {
+        private const val TAG = "FlowContainer"
+    }
 }

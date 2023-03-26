@@ -13,10 +13,10 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import me.wxc.widget.R
 import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.DailyTaskModel
+import me.wxc.widget.base.EditingTaskModel
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.IScheduleModel
-import me.wxc.widget.schedule.components.CreateTaskModel
-import me.wxc.widget.schedule.components.DailyTaskModel
 import me.wxc.widget.tools.*
 import java.util.*
 
@@ -28,29 +28,13 @@ class DailyTaskListView @JvmOverloads constructor(
 
     override val parentRender: ICalendarRender
         get() = parent as ICalendarRender
-    override val calendar: Calendar = startOfDay()
-    override val startTime: Long
+    override val calendar: Calendar = beginOfDay()
+    override val beginTime: Long
         get() = calendar.timeInMillis
     override val endTime: Long
         get() = calendar.timeInMillis + dayMillis
-    override var focusedDayTime: Long = -1L
-        set(value) {
-            field = value
-        }
-    override var scheduleModels: List<IScheduleModel> = listOf()
-        set(value) {
-            field = value
-            if (value.any()) {
-                recyclerView.visibility = View.VISIBLE
-                emptyView.visibility = View.GONE
-                recyclerView.adapter = Adapter()
-            } else {
-                recyclerView.visibility = View.GONE
-                emptyView.visibility = View.VISIBLE
-                recyclerView.adapter = null
-            }
-        }
-
+    override var focusedDayTime: Long by setter(-1)
+    override var selectedDayTime: Long by setter(nowMillis)
 
     init {
         inflate(context, R.layout.daily_task_list_view, this)
@@ -63,11 +47,24 @@ class DailyTaskListView @JvmOverloads constructor(
             }
         }
         emptyView.setOnClickListener {
-            ScheduleConfig.onCreateTaskClickBlock(CreateTaskModel(
-                startTime = ScheduleConfig.selectedDayTime + 10 * hourMillis,
-                duration = quarterMillis * 2,
-                onNeedScrollBlock = { _, _ -> }
-            ))
+            ScheduleConfig.onCreateTaskClickBlock(
+                DailyTaskModel(
+                    beginTime = ScheduleConfig.selectedDayTime + 10 * hourMillis,
+                    duration = quarterMillis * 2,
+                    editingTaskModel = EditingTaskModel()
+                )
+            )
+        }
+    }
+    override var scheduleModels: List<IScheduleModel> by setter(listOf()) { _, list ->
+        if (list.any()) {
+            recyclerView.visibility = View.VISIBLE
+            emptyView.visibility = View.GONE
+            recyclerView.adapter = Adapter()
+        } else {
+            recyclerView.visibility = View.GONE
+            emptyView.visibility = View.VISIBLE
+            recyclerView.adapter = null
         }
     }
 
@@ -81,11 +78,11 @@ class DailyTaskListView @JvmOverloads constructor(
 
         private fun generateSize() {
             size = scheduleModels.size
-            if (size > 0 && scheduleModels[0].startTime.dDays == System.currentTimeMillis().dDays) {
+            if (size > 0 && scheduleModels[0].beginTime.dDays == nowMillis.dDays) {
                 size += 1
                 nowLineIndex = 0
                 scheduleModels.forEach {
-                    if (it.endTime < System.currentTimeMillis()) {
+                    if (it.endTime < nowMillis) {
                         nowLineIndex++
                     } else {
                         return
@@ -118,14 +115,9 @@ class DailyTaskListView @JvmOverloads constructor(
                 }
                 val model = scheduleModels[position]
                 holder.title.text = (model as? DailyTaskModel)?.title
-                holder.timeRange.text =
-                    "${sdf_yyyyMMddHHmmss.format(model.startTime)} ~ ${
-                        sdf_yyyyMMddHHmmss.format(
-                            model.endTime
-                        )
-                    }"
+                holder.timeRange.text = "${model.beginTime.HHmm} ~ ${model.endTime.HHmm}"
                 holder.fg.visibility =
-                    if (model.endTime < System.currentTimeMillis()) VISIBLE else GONE
+                    if (model.endTime < nowMillis) VISIBLE else GONE
                 holder.itemView.setOnClickListener {
                     ScheduleConfig.onDailyTaskClickBlock(model as DailyTaskModel)
                 }

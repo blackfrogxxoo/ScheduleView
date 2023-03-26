@@ -1,20 +1,13 @@
 package me.wxc.widget.tools
 
-import android.app.Activity
 import android.content.res.Resources
 import android.graphics.Point
 import android.graphics.RectF
 import android.view.MotionEvent
 import android.view.View
-import androidx.fragment.app.Fragment
 import kotlin.math.roundToInt
-
-val View.TAG: String
-    get() = this::class.java.simpleName
-val Activity.TAG: String
-    get() = this::class.java.simpleName
-val Fragment.TAG: String
-    get() = this::class.java.simpleName
+import kotlin.properties.Delegates
+import kotlin.properties.ReadWriteProperty
 
 val Int.dp: Int
     get() = (Resources.getSystem().displayMetrics.density * this).roundToInt()
@@ -57,4 +50,11 @@ fun RectF?.topPoint(): Point? {
 
 fun RectF?.bottomPoint(): Point? {
     return this?.run { Point(left.toInt(), bottom.toInt()) }
+}
+
+inline fun <T> setter(
+    default: T,
+    crossinline onSet: (old: T, new: T) -> Unit = { old, new -> }
+): ReadWriteProperty<Any?, T> = Delegates.observable(default) { _, old, new ->
+    onSet(old, new)
 }

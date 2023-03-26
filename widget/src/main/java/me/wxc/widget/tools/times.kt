@@ -1,18 +1,24 @@
 package me.wxc.widget.tools
 
+import android.util.Log
+import me.wxc.widget.ScheduleConfig
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.roundToInt
 
 
-val sdf_HHmm = SimpleDateFormat("HH:mm", Locale.ROOT)
-val sdf_yyyyMMddHHmmss = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
-val sdf_yyyyM = SimpleDateFormat("yyyy年M月")
-val sdf_Md = SimpleDateFormat("M月d日")
+private val sdf_HHmm = SimpleDateFormat("HH:mm", Locale.ROOT)
+private val sdf_yyyyMMddHHmmss = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ROOT)
+private val sdf_yyyyM = SimpleDateFormat("yyyy年M月", Locale.ROOT)
+private val sdf_M = SimpleDateFormat("M月", Locale.ROOT)
+private val sdf_yyyyMd = SimpleDateFormat("yyyy年M月d日", Locale.ROOT)
+private val sdf_Md = SimpleDateFormat("M月d日", Locale.ROOT)
 
-val quarterMillis = 15 * 60 * 1000L
-val hourMillis = 60 * 60 * 1000L
-val dayMillis = 24 * hourMillis
+val nowMillis
+    get() = System.currentTimeMillis()
+const val quarterMillis = 15 * 60 * 1000L
+const val hourMillis = 60 * 60 * 1000L
+const val dayMillis = 24 * hourMillis
 
 val Long.hours: Int
     get() = run {
@@ -21,9 +27,9 @@ val Long.hours: Int
         }.get(Calendar.HOUR_OF_DAY)
     }
 val Long.dDays: Long
-    get() = (startOfDay(this).timeInMillis - startOfDay().timeInMillis) / dayMillis
+    get() = (beginOfDay(this).timeInMillis - beginOfDay().timeInMillis) / dayMillis
 val Long.dMonths: Int
-    get() = (years - System.currentTimeMillis().years) * 12 + monthOfYear - System.currentTimeMillis().monthOfYear
+    get() = (years - nowMillis.years) * 12 + monthOfYear - nowMillis.monthOfYear
 
 val Long.years: Int
     get() = run {
@@ -35,7 +41,7 @@ val Long.monthOfYear: Int
     get() = run {
         Calendar.getInstance().apply {
             time = Date(this@run)
-        }.get(Calendar.MONTH)
+        }.get(Calendar.MONTH) + 1
     }
 
 val Long.calendar: Calendar
@@ -76,30 +82,63 @@ val Long.dayOfWeekTextSimple: String
         }
     }
 
-val Long.hhMM: String
+val Long.HHmm: String
     get() = sdf_HHmm.format(this)
 
+val Long.yyyyMMddHHmmss: String
+    get() = sdf_yyyyMMddHHmmss.format(this)
+
+val Long.yyyyMd: String
+    get() = sdf_yyyyMd.format(this)
+
+val Long.M: String
+    get() = sdf_M.format(this)
+
+val Long.yyyyM: String
+    get() = sdf_yyyyM.format(this)
+
+val Long.Md: String
+    get() = sdf_Md.format(this)
+
+val Calendar.HHmm: String
+    get() = timeInMillis.HHmm
+
+val Calendar.yyyyMMddHHmmss: String
+    get() = timeInMillis.yyyyMMddHHmmss
+
+val Calendar.yyyyMd: String
+    get() = timeInMillis.yyyyMd
+
+val Calendar.yyyyM: String
+    get() = timeInMillis.yyyyM
+
+val Calendar.M: String
+    get() = timeInMillis.M
+
+val Calendar.Md: String
+    get() = timeInMillis.Md
+
 val Calendar.firstDayOfMonthTime: Long
-    get() = startOfDay(timeInMillis).apply {
+    get() = beginOfDay(timeInMillis).apply {
         set(Calendar.DAY_OF_MONTH, getActualMinimum(Calendar.DAY_OF_MONTH))
     }.timeInMillis
 
 val Calendar.lastDayOfMonthTime: Long
-    get() = startOfDay(timeInMillis).apply {
+    get() = beginOfDay(timeInMillis).apply {
         set(Calendar.DAY_OF_MONTH, getActualMaximum(Calendar.DAY_OF_MONTH))
     }.timeInMillis
 
 val Calendar.firstDayOfWeekTime: Long
-    get() = startOfDay(timeInMillis).apply {
+    get() = beginOfDay(timeInMillis).apply {
         set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
     }.timeInMillis
 
 val Calendar.lastDayOfWeekTime: Long
-    get() = startOfDay(timeInMillis).apply {
+    get() = beginOfDay(timeInMillis).apply {
         set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY)
     }.timeInMillis
 
-fun startOfDay(timestamp: Long = System.currentTimeMillis()) = Calendar.getInstance().apply {
+fun beginOfDay(timestamp: Long = nowMillis): Calendar = Calendar.getInstance().apply {
     time = Date(timestamp)
     set(Calendar.HOUR_OF_DAY, 0)
     set(Calendar.MINUTE, 0)
@@ -107,8 +146,8 @@ fun startOfDay(timestamp: Long = System.currentTimeMillis()) = Calendar.getInsta
     set(Calendar.MILLISECOND, 0)
 }
 
-fun Long.adjustTimeInDay(period: Long, roundTo: Boolean): Long {
-    val zeroOfDay = startOfDay(this).timeInMillis
+fun Long.adjustTimestamp(period: Long, roundTo: Boolean): Long {
+    val zeroOfDay = beginOfDay(this).timeInMillis
     return if (!roundTo) {
         this - (this - zeroOfDay) % period
     } else {
@@ -116,10 +155,34 @@ fun Long.adjustTimeInDay(period: Long, roundTo: Boolean): Long {
     }
 }
 
-fun Long.adjustTimeSelf(period: Long, roundTo: Boolean): Long {
+fun Long.adjustDuration(period: Long, roundTo: Boolean): Long {
     return if (roundTo) {
         (1f * this / period).roundToInt() * period
     } else {
         (1f * this / period).toInt() * period
+    }
+}
+
+fun Long.parseMonthIndex(): Int {
+    if (this == -1L) return nowMillis.parseMonthIndex()
+    return run {
+        val start = beginOfDay(ScheduleConfig.scheduleBeginTime)
+        val end = beginOfDay(this)
+        val result =
+            (end.get(Calendar.YEAR) - start.get(Calendar.YEAR)) * 12 + (end.get(Calendar.MONTH) - start.get(
+                Calendar.MONTH
+            ))
+        result.apply { Log.i("MonthIndex", "month index = $result") }
+    }
+}
+
+fun Long.parseWeekIndex(): Int {
+    if (this == -1L) return nowMillis.parseWeekIndex()
+    return run {
+        val startWeekDay = beginOfDay(ScheduleConfig.scheduleBeginTime).apply {
+            timeInMillis -= (get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY) * dayMillis
+        }.timeInMillis
+        val result = ((this - startWeekDay) / (7 * dayMillis)).toInt()
+        result.apply { Log.i("WeekIndex", "week index = $result") }
     }
 }

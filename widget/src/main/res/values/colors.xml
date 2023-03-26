@@ -12,11 +12,13 @@
     <color name="black3">#FFA6A6A6</color>
     <color name="black4">#FFE0E0E0</color>
     <color name="black5">#FFF2F3F5</color>
+    <color name="black6">#FFF9F9F9</color>
     <color name="blue1">#FF3370FF</color>
     <color name="blue2">#663370FF</color>
     <color name="blue3">#403370FF</color>
     <color name="blue4">#163370FF</color>
     <color name="blue5">#123370FF</color>
+    <color name="blue6">#063370FF</color>
     <color name="transparent1">#00000000</color>
     <color name="transparent2">#20000000</color>
     <color name="transparent3">#AAEEEEEE</color>

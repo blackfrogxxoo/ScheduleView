@@ -2,12 +2,13 @@ package me.wxc.widget.schedule.components
 
 import android.graphics.*
 import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.DailyTaskModel
 import me.wxc.widget.base.IScheduleComponent
 import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.schedule.*
 import me.wxc.widget.tools.*
 
-class ClockLineComponent(override var model: ClockLineModel) : IScheduleComponent<ClockLineModel> {
+class ClockLineComponent(override val model: ClockLineModel) : IScheduleComponent<ClockLineModel> {
     override val originRect: RectF = originRect().apply {
         left = 0f
         right = parentWidth.toFloat()
@@ -47,30 +48,30 @@ class ClockLineComponent(override var model: ClockLineModel) : IScheduleComponen
         paint.pathEffect = null
         // 绘制创建中的日程时间
         model.createTaskModel?.let {
-            val startTime = it.draggingRect?.topPoint()
-                ?.positionToTime(scrollX = -anchorPoint.x, scrollY = -anchorPoint.y) ?: it.startTime
-            val endTime = it.draggingRect?.bottomPoint()
+            val beginTime = it.editingTaskModel?.draggingRect?.topPoint()
+                ?.positionToTime(scrollX = -anchorPoint.x, scrollY = -anchorPoint.y) ?: it.beginTime
+            val endTime = it.editingTaskModel?.draggingRect?.bottomPoint()
                 ?.positionToTime(scrollX = -anchorPoint.x, scrollY = -anchorPoint.y) ?: it.endTime
-            val adjustedStartTime = startTime.adjustTimeInDay(
+            val adjustedBeginTime = beginTime.adjustTimestamp(
                 quarterMillis, true
             )
-            val adjustedEndTime = endTime.adjustTimeInDay(
+            val adjustedEndTime = endTime.adjustTimestamp(
                 quarterMillis, true
             )
             val createTop =
-                drawingRect.top + dayHeight * (adjustedStartTime - startOfDay(adjustedStartTime).timeInMillis - model.startTime + startOfDay(
-                    model.startTime
+                drawingRect.top + dayHeight * (adjustedBeginTime - beginOfDay(adjustedBeginTime).timeInMillis - model.beginTime + beginOfDay(
+                    model.beginTime
                 ).timeInMillis) / (hourMillis * 24)
             val createBottom =
-                drawingRect.top + dayHeight * (adjustedEndTime - startOfDay(adjustedEndTime).timeInMillis - model.startTime + startOfDay(
-                    model.startTime
+                drawingRect.top + dayHeight * (adjustedEndTime - beginOfDay(adjustedEndTime).timeInMillis - model.beginTime + beginOfDay(
+                    model.beginTime
                 ).timeInMillis) / (hourMillis * 24)
             paint.color = ScheduleConfig.colorBlue1
             if (createTop >= drawingRect.top && createTop < drawingRect.bottom && model.clock != 24) {
-                canvas.drawText(adjustedStartTime.hhMM, startX, createTop + 4f.dp, paint)
+                canvas.drawText(adjustedBeginTime.HHmm, startX, createTop + 4f.dp, paint)
             }
             if (createBottom >= drawingRect.top && createBottom < drawingRect.bottom) {
-                val text = if (adjustedEndTime.hhMM == "00:00" && model.clock == 24) "24:00" else adjustedEndTime.hhMM
+                val text = if (adjustedEndTime.HHmm == "00:00" && model.clock == 24) "24:00" else adjustedEndTime.HHmm
                 canvas.drawText(text, startX, createBottom + 4f.dp, paint)
             }
         }
@@ -87,11 +88,11 @@ class ClockLineComponent(override var model: ClockLineModel) : IScheduleComponen
 
 data class ClockLineModel(
     val clock: Int,
-    var createTaskModel: CreateTaskModel? = null
+    var createTaskModel: DailyTaskModel? = null
 ) : IScheduleModel {
-    private val zeroClock = startOfDay()
-    override val startTime: Long = zeroClock.timeInMillis + clock * hourMillis
+    private val zeroClock = beginOfDay()
+    override val beginTime: Long = zeroClock.timeInMillis + clock * hourMillis
     override val endTime: Long = zeroClock.timeInMillis + (clock + 1) * hourMillis
     val showText: String
-        get() = if (clock == 24) "24:00" else startTime.hhMM
+        get() = if (clock == 24) "24:00" else beginTime.HHmm
 }

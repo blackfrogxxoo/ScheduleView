@@ -9,6 +9,7 @@ import android.widget.RadioGroup.LayoutParams
 import androidx.core.view.ViewCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
+import me.wxc.widget.R
 import me.wxc.todolist.databinding.FragmentRepeatModeBinding
 import me.wxc.todolist.tools.argument
 import me.wxc.widget.base.RepeatMode
@@ -44,6 +45,7 @@ class RepeatModeFragment : DialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.title.text = "设置重复"
         binding.radioGroup.setOnCheckedChangeListener { group, checkedId ->
             val mode = group.findViewById<RadioButton>(checkedId).tag as RepeatMode
             onSelected.invoke(mode)
@@ -65,7 +67,7 @@ class RepeatModeFragment : DialogFragment() {
             id = ViewCompat.generateViewId()
             tag = this@generateRadioButton
             isChecked = repeatMode.repeatModeInt == repeatModeInt
-            setTextColor(context.getColor(me.wxc.widget.R.color.black1))
+            setTextColor(context.getColor(R.color.black1))
         }
     }
 

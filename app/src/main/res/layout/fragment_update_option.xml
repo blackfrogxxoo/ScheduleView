@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/updateOne"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="15dp"
+        android:gravity="center"
+        android:text="仅修改此日程"
+        android:textColor="@color/black1"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/updateFrom"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:gravity="center"
+        android:text="修改此次及后续日程"
+        android:textColor="@color/black1"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/updateAll"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:gravity="center"
+        android:text="修改所有日程"
+        android:textColor="@color/black1"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="12dp"
+        android:fontFamily="@font/product_sans_bold3"
+        android:padding="8dp"
+        android:text="取消"
+        android:textColor="@color/blue1" />
+
+</LinearLayout>

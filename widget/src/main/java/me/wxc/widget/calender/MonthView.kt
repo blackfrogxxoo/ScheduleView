@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.RecyclerView
@@ -20,16 +21,13 @@ import me.wxc.widget.ScheduleConfig
 import me.wxc.widget.base.ICalendarParent
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.IScheduleModel
-import me.wxc.widget.base.ISelectedDayTimeHolder
 import me.wxc.widget.tools.*
 import java.util.*
 import kotlin.math.roundToInt
-import kotlin.properties.Delegates
 
 class MonthView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : ViewGroup(context, attrs, defStyleAttr), ICalendarRender, ICalendarParent,
-    ISelectedDayTimeHolder {
+) : ViewGroup(context, attrs, defStyleAttr), ICalendarRender, ICalendarParent {
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = 11f.dp
         typeface = Typeface.create(
@@ -37,60 +35,50 @@ class MonthView @JvmOverloads constructor(
             Typeface.NORMAL
         )
     }
-    private lateinit var dailyTaskListViewGroup: DailyTaskListViewGroup
+    private val dailyTaskListViewGroup: DailyTaskListViewGroup
 
     override val parentRender: ICalendarRender? = null
-    override val calendar: Calendar = startOfDay()
-    override val startTime: Long
-        get() = startOfDay(calendar.firstDayOfMonthTime).apply {
+    override val calendar: Calendar = beginOfDay()
+    override val beginTime: Long
+        get() = beginOfDay(calendar.firstDayOfMonthTime).apply {
             set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
         }.timeInMillis
     override val endTime: Long
-        get() = startOfDay(calendar.lastDayOfMonthTime).apply {
+        get() = beginOfDay(calendar.lastDayOfMonthTime).apply {
             set(Calendar.DAY_OF_WEEK, Calendar.SATURDAY)
         }.timeInMillis
-    override var focusedDayTime: Long by Delegates.observable(-1L) { _, _, time ->
+    override var focusedDayTime: Long by setter(-1L) { _, time ->
         collapseLine = if (time > 0) {
-            ((time - startTime) / (7 * dayMillis)).toInt()
+            ((time - beginTime) / (7 * dayMillis)).toInt()
         } else {
             -1
         }
         childRenders.forEach {
             it.focusedDayTime = time
         }
-        dailyTaskListViewGroup.focusedDayTime = time
         if ((parent as? RecyclerView)?.isVisible == true && (parent as? RecyclerView)?.scrollState == RecyclerView.SCROLL_STATE_IDLE) {
             if (time != -1L) {
-                ScheduleConfig.onDateSelectedListener.invoke(startOfDay(time))
-            } else if (System.currentTimeMillis() in (startTime + 1) until endTime) {
-                ScheduleConfig.onDateSelectedListener.invoke(startOfDay())
+                ScheduleConfig.onDateSelectedListener.invoke(beginOfDay(time))
+            } else if (nowMillis in (beginTime + 1) until endTime) {
+                ScheduleConfig.onDateSelectedListener.invoke(beginOfDay())
             } else {
                 ScheduleConfig.onDateSelectedListener.invoke(calendar)
             }
+            Log.i(TAG, ": ${ScheduleConfig.selectedDayTime.yyyyMd}")
         }
     }
-    override var scheduleModels: List<IScheduleModel> = listOf()
-        set(value) {
-            field = value
-            _children.forEach { child ->
-                child.getSchedulesFrom(value)
-            }
-            dailyTaskListViewGroup.getSchedulesFrom(value)
-        }
-    override var selectedDayTime: Long
-        get() = ScheduleConfig.selectedDayTime
-        set(value) {
-            collapseLine = -1
-        }
+    override var selectedDayTime: Long by setter(nowMillis) { _, time ->
+        collapseLine = -1
+    }
+    override var scheduleModels: List<IScheduleModel> by setter(listOf()) { _, list ->
+        childRenders.forEach { it.getSchedulesFrom(list) }
+    }
     override val childRenders: List<ICalendarRender>
-        get() = _children.toList()
-
-    private val _children = mutableListOf<ICalendarRender>().apply {
-    }
+        get() = children.filterIsInstance<ICalendarRender>().toList()
 
     private val dayWidth: Float = screenWidth / 7f
     private val dayHeight: Float
-        get() = 1f * (measuredHeight - paddingTop) / (_children.size / 7)
+        get() = 1f * (measuredHeight - paddingTop) / (childCount / 7)
     private val topPadding = 26f.dp
     private var collapseLine = -1
         set(value) {
@@ -108,7 +96,7 @@ class MonthView @JvmOverloads constructor(
         updatePadding(top = topPadding.roundToInt())
         dailyTaskListViewGroup = DailyTaskListViewGroup(context).apply {
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-            setBackgroundColor(ScheduleConfig.colorBlack5)
+            setBackgroundColor(ScheduleConfig.colorBlack6)
         }
         addView(dailyTaskListViewGroup)
     }
@@ -117,13 +105,13 @@ class MonthView @JvmOverloads constructor(
         super.onDraw(canvas)
         paint.color = ScheduleConfig.colorBlack3
         val todayWeekDayIndex =
-            if (calendar.timeInMillis.dMonths == System.currentTimeMillis().dMonths) {
-                startOfDay().get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
+            if (calendar.timeInMillis.dMonths == nowMillis.dMonths) {
+                beginOfDay().get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
             } else {
                 -1
             }
         for (i in 0 until 7) {
-            val time = startTime + i * dayMillis
+            val time = beginTime + i * dayMillis
             val left = 10f.dp + i * dayWidth
             if (todayWeekDayIndex == i) {
                 paint.color = ScheduleConfig.colorBlue1
@@ -154,7 +142,7 @@ class MonthView @JvmOverloads constructor(
                 continue
             }
             val calendar = (child as ICalendarRender).calendar
-            val dDays = calendar.timeInMillis.dDays - startTime.dDays
+            val dDays = calendar.timeInMillis.dDays - beginTime.dDays
             val line = dDays / 7
             val left = dDays % 7 * dayWidth
             var top = paddingTop + line * dayHeight
@@ -180,14 +168,14 @@ class MonthView @JvmOverloads constructor(
     private fun onCollapseLineChanged(old: Int, new: Int, doOnEnd: () -> Unit = {}) {
         Log.i(TAG, "onCollapseLineChanged: $old, $new")
         if (old == -1 && new >= 0) {
-            dailyTaskListViewGroup.calendar.timeInMillis = startTime + new * 7 * dayMillis
+            dailyTaskListViewGroup.calendar.timeInMillis = beginTime + new * 7 * dayMillis
             dailyTaskListViewGroup.getSchedulesFrom(scheduleModels)
             collapseCenter = paddingTop + (new + 1) * dayHeight
             val destTop = paddingTop + dayHeight
-            val destBottom = if (new < _children.size / 7 - 1) {
-                paddingTop + (_children.size / 7 - 1) * dayHeight
+            val destBottom = if (new < childCount / 7 - 1) {
+                paddingTop + (childCount / 7 - 1) * dayHeight
             } else {
-                paddingTop + _children.size / 7 * dayHeight
+                paddingTop + childCount / 7 * dayHeight
             }
             ValueAnimator.ofFloat(0f, 1f).apply {
                 doOnStart {
@@ -235,30 +223,20 @@ class MonthView @JvmOverloads constructor(
 
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
-        Log.i(
-            TAG,
-            "onAttachedToWindow ${sdf_yyyyMMddHHmmss.format(startTime)} ${
-                sdf_yyyyMMddHHmmss.format(
-                    endTime
-                )
-            }"
-        )
-        if (_children.isEmpty()) {
-            for (time in startTime..endTime step dayMillis) {
-                DayView(context).let { child ->
-                    child.calendar.timeInMillis = time
-                    _children.add(child)
-                    addView(child)
-                    child.setOnClickListener {
-                        focusedDayTime = if (focusedDayTime != child.startTime) {
-                            child.startTime
-                        } else {
-                            -1
-                        }
+        Log.i(TAG, "onAttachedToWindow ${beginTime.yyyyMMddHHmmss} ${endTime.yyyyMMddHHmmss}")
+        for (time in beginTime..endTime step dayMillis) {
+            DayView(context).let { child ->
+                child.calendar.timeInMillis = time
+                addView(child)
+                child.setOnClickListener {
+                    focusedDayTime = if (focusedDayTime != child.beginTime) {
+                        child.beginTime
+                    } else {
+                        -1
                     }
-                    if (scheduleModels.any()) {
-                        child.getSchedulesFrom(scheduleModels)
-                    }
+                }
+                if (scheduleModels.any()) {
+                    child.getSchedulesFrom(scheduleModels)
                 }
             }
         }
@@ -266,25 +244,19 @@ class MonthView @JvmOverloads constructor(
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        Log.i(
-            TAG,
-            "onDetachedFromWindow ${sdf_yyyyMMddHHmmss.format(startTime)} ${
-                sdf_yyyyMMddHHmmss.format(
-                    endTime
-                )
-            }"
-        )
-        if (_children.isNotEmpty()) {
-            _children.forEach {
-                this@MonthView.removeView(it as View)
-            }
-            _children.clear()
-        }
+        Log.i(TAG, "onDetachedFromWindow ${beginTime.yyyyMMddHHmmss} ${endTime.yyyyMMddHHmmss}")
+        removeViews(1, childCount - 1)
         focusedDayTime = -1L
     }
 
     override fun onVisibilityChanged(changedView: View, visibility: Int) {
         super.onVisibilityChanged(changedView, visibility)
-        focusedDayTime = -1L
+        if (changedView == parent && visibility == GONE) {
+            focusedDayTime = -1L
+        }
+    }
+
+    companion object {
+        private const val TAG = "MonthView"
     }
 }

@@ -7,9 +7,11 @@ import me.wxc.widget.schedule.clockWidth
 import me.wxc.widget.schedule.dateLineHeight
 import me.wxc.widget.schedule.originRect
 import me.wxc.widget.schedule.refreshRect
-import me.wxc.widget.tools.*
+import me.wxc.widget.tools.dp
+import me.wxc.widget.tools.nowMillis
 
-class NowLineComponent(override var model: NowLineModel) : IScheduleComponent<NowLineModel> {
+class NowLineComponent : IScheduleComponent<NowLineModel> {
+    override val model: NowLineModel = NowLineModel
     override val originRect: RectF = originRect()
     override val drawingRect: RectF = originRect()
 
@@ -45,8 +47,8 @@ class NowLineComponent(override var model: NowLineModel) : IScheduleComponent<No
 }
 
 object NowLineModel : IScheduleModel {
-    override val startTime: Long
-        get() = System.currentTimeMillis()
+    override val beginTime: Long
+        get() = nowMillis
     override val endTime: Long
-        get() = System.currentTimeMillis()
+        get() = nowMillis
 }

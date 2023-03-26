@@ -14,10 +14,12 @@ import me.wxc.widget.R
 import me.wxc.widget.base.*
 import me.wxc.widget.schedule.components.*
 import me.wxc.widget.tools.*
+import me.wxc.widget.schedule.components.ClockLineComponent
+import me.wxc.widget.schedule.components.ClockLineModel
 
 class ScheduleView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), IScheduleRender, IScheduleCreator {
+) : View(context, attrs, defStyleAttr), IScheduleRender {
 
     init {
         updatePadding(top = canvasPadding, bottom = canvasPadding)
@@ -39,24 +41,27 @@ class ScheduleView @JvmOverloads constructor(
         invalidate()
     }
 
+    private val coincided = mutableListOf<CoincideModel>()
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val time = System.currentTimeMillis()
-        adapter.fixedComponents.forEach {
+        adapter.backgroundComponents.forEach {
             it.updateDrawingRect(calendarPosition)
-            if (it.drawingRect.ifVisible(this) || it is CreateTaskComponent || it is DateLineComponent) {
+            if (it.drawingRect.ifVisible(this)) {
                 it.onDraw(canvas, paint)
             }
         }
-        val start = -(calendarPosition.x / dayWidth).toInt() - 1
-        val end = start + 1 + (width / dayWidth).toInt()
-        val coincided = mutableListOf<CoincideModel>()
-        (adapter as ScheduleAdapter).modelsGroupByDay
-            .filterKeys { it in start..end }.flatMap { it.value }
-            .apply {
-                this.sortedBy { it.startTime }.forEach {
-                    if (coincided.isEmpty() || coincided.last().endTime <= it.startTime) {
-                        coincided.add(CoincideModel(it.startTime, it.endTime, mutableListOf(it)))
+        val startDay = -(calendarPosition.x / dayWidth).toInt() - 1
+        val endDay = startDay + 1 + (width / dayWidth).toInt()
+        coincided.clear()
+        val modelsGroupByDays = (adapter as ScheduleAdapter).modelsGroupByDay(startDay, endDay)
+        modelsGroupByDays
+            .filterKeys { it in startDay..endDay }
+            .flatMap { it.value }
+            .sortedBy { it.beginTime - (it.endTime - it.beginTime) / 1000 } // beginTime相同时，duration更长的先绘制
+            .onEach {
+                if ((it as? DailyTaskModel)?.editingTaskModel == null) {
+                    if (coincided.isEmpty() || coincided.last().endTime <= it.beginTime) {
+                        coincided.add(CoincideModel(it.beginTime, it.endTime, mutableListOf(it)))
                     } else {
                         coincided.last().endTime =
                             it.endTime.coerceAtLeast(coincided.last().endTime)
@@ -65,95 +70,145 @@ class ScheduleView @JvmOverloads constructor(
                 }
             }
             .map { adapter.onCreateComponent(it) }
-            .apply {
-                adapter.visibleComponent = this
-            }.forEach { component ->
+            .onEach {
+                (it as? DailyTaskComponent)?.existEditing =
+                    it.model.taskId == adapter.editingTaskComponent?.model?.id
+            }
+            .apply { adapter.visibleComponents = this }
+            .forEach { component ->
                 component.setCoincidedScheduleModels(
                     coincided.find { it.coincided.size > 1 && it.coincided.contains(component.model) }?.coincided
                         ?: emptyList()
                 )
                 component.updateDrawingRect(calendarPosition)
-                if (component.drawingRect.ifVisible(this) || component is CreateTaskComponent || component is DateLineComponent) {
+                if (component.drawingRect.ifVisible(this)) {
                     component.onDraw(canvas, paint)
                 }
             }
-        adapter.createTaskComponent?.let {
+        adapter.editingTaskComponent?.let {
             it.updateDrawingRect(calendarPosition)
             it.onDraw(canvas, paint)
         }
-        Log.i(TAG, "onDraw cost time: ${System.currentTimeMillis() - time}")
+        adapter.foregroundComponents.forEach {
+            it.updateDrawingRect(calendarPosition)
+            if (it.drawingRect.ifVisible(this)) {
+                it.onDraw(canvas, paint)
+            }
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         return widget.onTouchEvent(event)
     }
 
-    override fun addCreateTask(motionEvent: MotionEvent): Boolean {
-        if (adapter.createTaskComponent != null) return false
-        val model = CreateTaskModel(
-            startTime = PointF(motionEvent.x - dayWidth / 2, motionEvent.y)
+    override fun startEditingTask(
+        motionEvent: MotionEvent,
+        toEdit: DailyTaskModel?
+    ): Boolean {
+        if (toEdit == null && adapter.editingTaskComponent != null) return false
+        val model = toEdit?.copy(
+            editingTaskModel = EditingTaskModel(
+                state = State.DRAG_BODY
+            ) { x, y ->
+                if (!widget.isScrolling()) {
+                    widget.scrollTo(
+                        -calendarPosition.x + x,
+                        -calendarPosition.y + paddingTop + y,
+                        duration = if (widget.renderRange == IScheduleWidget.RenderRange.ThreeDayRange) 250 else 500
+                    )
+                }
+            }
+        ) ?: DailyTaskModel(
+            beginTime = PointF(motionEvent.x - dayWidth / 2, motionEvent.y)
                 .toPoint()
                 .positionToTime(-calendarPosition.x, -calendarPosition.y)
-                .adjustTimeInDay(quarterMillis, true),
-            duration = hourMillis / 2,
-            title = "",
-        ) { x, y ->
-            if (!widget.isScrolling()) {
-                widget.scrollTo(-calendarPosition.x + x, -calendarPosition.y + paddingTop + y)
+                .adjustTimestamp(quarterMillis, true),
+            editingTaskModel = EditingTaskModel { x, y ->
+                if (!widget.isScrolling()) {
+                    widget.scrollTo(
+                        -calendarPosition.x + x,
+                        -calendarPosition.y + paddingTop + y,
+                        duration = if (widget.renderRange == IScheduleWidget.RenderRange.ThreeDayRange) 250 else 500
+                    )
+                }
             }
-        }.apply {
-            Log.i(
-                TAG,
-                "new task: ${sdf_yyyyMMddHHmmss.format(startTime)}"
-            )
-            adapter.models.filterIsInstance<ClockLineModel>().forEach {
-                it.createTaskModel = this
-            }
+        )
+        (adapter.onCreateComponent(model) as DailyTaskComponent).apply {
+            downX = motionEvent.x
+            downY = motionEvent.y
+            lastX = motionEvent.x
+            lastY = motionEvent.y
+            updateDrawingRect(calendarPosition)
         }
-        adapter.createTaskComponent = adapter.onCreateComponent(model) as CreateTaskComponent
         return true
     }
 
-    override fun removeCreateTask(): Boolean {
-        adapter.createTaskComponent = null
-        return true
+    override fun finishEditing() {
+        adapter.editingTaskComponent = null
+    }
+
+    companion object {
+        private const val TAG = "ScheduleView"
     }
 }
 
 data class CoincideModel(
-    override var startTime: Long,
+    override var beginTime: Long,
     override var endTime: Long,
     val coincided: MutableList<IScheduleModel>
 ) : IScheduleModel
 
 class ScheduleAdapter : IScheduleRenderAdapter {
     override var models: MutableList<IScheduleModel> = mutableListOf()
-    override var modelsGroupByDay = mutableMapOf<Int, List<IScheduleModel>>()
-    override var visibleComponent: List<IScheduleComponent<*>> = listOf()
-    override var createTaskComponent: CreateTaskComponent? = null
-    override val fixedComponents: List<IScheduleComponent<*>> =
+    override var visibleComponents: List<IScheduleComponent<*>> = listOf()
+    override var editingTaskComponent: DailyTaskComponent? = null
+        set(value) {
+            field = value
+            backgroundComponents.map { it.model }.filterIsInstance<ClockLineModel>().forEach {
+                it.createTaskModel = value?.model
+            }
+            if (value == null) {
+                models.removeIf { (it as? DailyTaskModel)?.editingTaskModel != null }
+            }
+            models.removeIf { it.taskId == field?.model?.taskId }
+        }
+    override val backgroundComponents: List<IScheduleComponent<*>> =
         mutableListOf<IScheduleComponent<*>>().apply {
             for (i in 0..24) {
                 add(ClockLineComponent(ClockLineModel(i)))
             }
-            add(DateLineComponent(DateLineModel))
-            add(WeekLineComponent(WeekLineModel))
-            add(NowLineComponent(NowLineModel))
         }.toList()
-
+    override val foregroundComponents: List<IScheduleComponent<*>> = listOf(
+        DateLineComponent(),
+        WeekLineComponent(),
+        NowLineComponent()
+    )
     private val _taskComponentCache = SparseArray<IScheduleComponent<*>>()
 
+    private val _modelsGroupByDay: MutableMap<Int, List<IScheduleModel>> = mutableMapOf()
+
+    override fun modelsGroupByDay(startDay: Int, endDay: Int): Map<Int, List<IScheduleModel>> {
+        if (_modelsGroupByDay.none() && models.any()) {
+            models.filter { (it as? DailyTaskModel)?.editingTaskModel == null }
+                .groupBy { it.beginTime.dDays.toInt() }
+                .apply { _modelsGroupByDay.putAll(this) }
+        }
+        return _modelsGroupByDay.filter { it.key in startDay..endDay }
+    }
+
     override fun onCreateComponent(model: IScheduleModel): IScheduleComponent<*> {
-        // TODO 引入对象缓存机制
         return when (model) {
-            is CreateTaskModel -> createTaskComponent ?: run {
-                CreateTaskComponent(model).apply { createTaskComponent = this }
-            }
-            is DailyTaskModel -> _taskComponentCache.get(model.id.toInt()) ?: DailyTaskComponent(
-                model
-            ).apply {
-                _taskComponentCache.append(model.id.toInt(), this)
-                Log.i("ScheduleView", "create component: $this")
+            is DailyTaskModel -> if (model.editingTaskModel != null) {
+                editingTaskComponent ?: run {
+                    DailyTaskComponent(model).apply { editingTaskComponent = this }
+                }
+            } else {
+                _taskComponentCache.get(model.id.toInt()) ?: DailyTaskComponent(
+                    model
+                ).apply {
+                    _taskComponentCache.append(model.id.toInt(), this)
+                    Log.i("ScheduleView", "create component: $this, ${_taskComponentCache.size()}")
+                }
             }
             else -> throw IllegalArgumentException("invalid model: $model")
         }
@@ -161,35 +216,31 @@ class ScheduleAdapter : IScheduleRenderAdapter {
 
     override fun notifyModelsChanged() {
         _taskComponentCache.clear()
-        modelsGroupByDay = models.groupBy {
-            it.startTime.dDays.toInt()
-        }.toMutableMap()
+        _modelsGroupByDay.clear()
+        models.groupBy { it.beginTime.dDays.toInt() }
+            .apply { _modelsGroupByDay.putAll(this) }
     }
 
     override fun notifyModelAdded(model: IScheduleModel) {
-        val key = model.startTime.dDays.toInt()
-        modelsGroupByDay[key] = modelsGroupByDay
+        val key = model.beginTime.dDays.toInt()
+        _modelsGroupByDay[key] = _modelsGroupByDay
             .getOrPut(key) { emptyList() }
             .toMutableList()
+            .onEach { // 删除当天所有component的缓存
+                _taskComponentCache.remove(it.taskId.toInt())
+            }
             .apply { add(model) }
             .toList()
     }
 
-    private fun List<IScheduleComponent<*>>.sortComponent(): List<IScheduleComponent<*>> =
-        sortedBy {
-            when (it) {
-                is NowLineComponent -> 1
-                is DateLineComponent -> 2
-                is WeekLineComponent -> 2
-                else -> 0
-            }
-        }
-
     override fun notifyModelRemoved(model: IScheduleModel) {
-        val key = model.startTime.dDays.toInt()
-        modelsGroupByDay[key] = modelsGroupByDay
+        val key = model.beginTime.dDays.toInt()
+        _modelsGroupByDay[key] = _modelsGroupByDay
             .getOrPut(key) { emptyList() }
             .toMutableList()
+            .onEach { // 删除当天所有component的缓存
+                _taskComponentCache.remove(it.taskId.toInt())
+            }
             .apply { remove(model) }
             .toList()
     }

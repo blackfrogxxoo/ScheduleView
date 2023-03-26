@@ -15,7 +15,6 @@ import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.IScheduleModel
 import me.wxc.widget.tools.*
 import java.util.*
-import kotlin.properties.Delegates
 
 class FlowDayView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -29,26 +28,27 @@ class FlowDayView @JvmOverloads constructor(
     }
     override val parentRender: ICalendarRender
         get() = parent as ICalendarRender
-    override val calendar: Calendar = startOfDay()
-    override val startTime: Long
+    override val calendar: Calendar = beginOfDay()
+    override val beginTime: Long
         get() = calendar.timeInMillis
     override val endTime: Long
         get() = calendar.timeInMillis + dayMillis
-    override var focusedDayTime: Long by Delegates.observable(-1) { _, _, time ->
+    override var focusedDayTime: Long by setter(-1) { _, time ->
         invalidate()
     }
-    override var scheduleModels: List<IScheduleModel> = listOf()
-        set(value) {
-            field = value
-            invalidate()
-        }
+    override var selectedDayTime: Long by setter(-1) { _, time ->
+        invalidate()
+    }
+    override var scheduleModels: List<IScheduleModel> by setter(listOf()) { _, list ->
+        invalidate()
+    }
 
     override var calendarMode: CalendarMode
         set(value) {}
         get() = (parentRender as ICalendarModeHolder).calendarMode
 
     private val focused: Boolean
-        get() = focusedDayTime.dDays == startTime.dDays
+        get() = focusedDayTime.dDays == beginTime.dDays || selectedDayTime.dDays == beginTime.dDays
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -69,8 +69,8 @@ class FlowDayView @JvmOverloads constructor(
         val textX = width / 2f
         val textY = height / 2f
         val drawCircle: Boolean
-        paint.color = if (startTime.dDays == System.currentTimeMillis().dDays) {
-            if (focusedDayTime == -1L || focusedDayTime.dDays == startTime.dDays) {
+        paint.color = if (beginTime.dDays == nowMillis.dDays) {
+            if (focusedDayTime == -1L || focusedDayTime.dDays == beginTime.dDays) {
                 drawCircle = true
                 ScheduleConfig.colorBlue1
             } else {
@@ -90,7 +90,7 @@ class FlowDayView @JvmOverloads constructor(
         paint.strokeWidth = 1f.dp
         paint.textAlign = Paint.Align.CENTER
         paint.textSize = 13f.dp
-        paint.color = if (startTime.dDays == System.currentTimeMillis().dDays) {
+        paint.color = if (beginTime.dDays == nowMillis.dDays) {
             if (drawCircle) {
                 ScheduleConfig.colorWhite
             } else {
@@ -98,13 +98,13 @@ class FlowDayView @JvmOverloads constructor(
             }
         } else {
             if (calendarMode is CalendarMode.MonthMode) {
-                if (startTime < parentRender.calendar.firstDayOfMonthTime || startTime > parentRender.calendar.lastDayOfMonthTime) {
+                if (beginTime < parentRender.calendar.firstDayOfMonthTime || beginTime > parentRender.calendar.lastDayOfMonthTime) {
                     ScheduleConfig.colorBlack3
                 } else {
                     ScheduleConfig.colorBlack1
                 }
             } else {
-                if (endTime < System.currentTimeMillis()) {
+                if (endTime < nowMillis) {
                     ScheduleConfig.colorBlack3
                 } else {
                     ScheduleConfig.colorBlack1
@@ -112,6 +112,6 @@ class FlowDayView @JvmOverloads constructor(
             }
         }
         paint.isFakeBoldText = true
-        canvas.drawText(startTime.dayOfMonth.toString(), textX, textY + 4f.dp, paint)
+        canvas.drawText(beginTime.dayOfMonth.toString(), textX, textY + 4f.dp, paint)
     }
 }

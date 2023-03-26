@@ -8,17 +8,15 @@ import android.view.View
 import androidx.core.content.res.ResourcesCompat
 import me.wxc.widget.R
 import me.wxc.widget.ScheduleConfig
+import me.wxc.widget.base.DailyTaskModel
 import me.wxc.widget.base.ICalendarRender
 import me.wxc.widget.base.IScheduleModel
-import me.wxc.widget.base.ISelectedDayTimeHolder
-import me.wxc.widget.schedule.components.DailyTaskModel
 import me.wxc.widget.tools.*
 import java.util.*
-import kotlin.properties.Delegates
 
 class DayView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : View(context, attrs, defStyleAttr), ICalendarRender, ISelectedDayTimeHolder {
+) : View(context, attrs, defStyleAttr), ICalendarRender {
     override val parentRender: ICalendarRender
         get() = parent as ICalendarRender
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -27,23 +25,23 @@ class DayView @JvmOverloads constructor(
             Typeface.NORMAL
         )
     }
-    override val calendar: Calendar = startOfDay()
-    override val startTime: Long
+    override val calendar: Calendar = beginOfDay()
+    override val beginTime: Long
         get() = calendar.timeInMillis
     override val endTime: Long
         get() = calendar.timeInMillis + dayMillis
-    override var focusedDayTime: Long by Delegates.observable(-1) { _, _, time ->
+    override var focusedDayTime: Long by setter(-1) { _, _ ->
         invalidate()
     }
-    override var scheduleModels: List<IScheduleModel> = listOf()
-        set(value) {
-            field = value
-            invalidate()
-        }
-    override var selectedDayTime: Long = ScheduleConfig.selectedDayTime
+    override var scheduleModels: List<IScheduleModel> by setter(listOf()) { _, _ ->
+        invalidate()
+    }
+    override var selectedDayTime: Long by setter(-1) { _, _ ->
+        // do nothing
+    }
 
     private val focused: Boolean
-        get() = focusedDayTime.dDays == startTime.dDays
+        get() = focusedDayTime.dDays == beginTime.dDays
 
 
     private val pathEffect = DashPathEffect(floatArrayOf(1.5f.dp, 2.5f.dp), 0f)
@@ -149,7 +147,7 @@ class DayView @JvmOverloads constructor(
             paint.pathEffect = null
             paint.style = Paint.Style.FILL
             paint.textSize = 11f.dp
-            canvas.drawText(it.title, 12f.dp, top + 14.5f.dp, paint, canvas.width - 14f.dp)
+            canvas.drawText(it.title, 12f.dp, top + 14.5f.dp, paint, canvas.width - 14f.dp, false)
             top += 22f.dp
         }
     }
@@ -160,8 +158,8 @@ class DayView @JvmOverloads constructor(
         val textX = 16f.dp
         val textY = 16f.dp
         val drawCircle: Boolean
-        paint.color = if (startTime.dDays == System.currentTimeMillis().dDays) {
-            if (focusedDayTime == -1L || focusedDayTime.dDays == startTime.dDays) {
+        paint.color = if (beginTime.dDays == nowMillis.dDays) {
+            if (focusedDayTime == -1L || focusedDayTime.dDays == beginTime.dDays) {
                 drawCircle = true
                 ScheduleConfig.colorBlue1
             } else {
@@ -181,18 +179,22 @@ class DayView @JvmOverloads constructor(
         paint.strokeWidth = 1f.dp
         paint.textAlign = Paint.Align.CENTER
         paint.textSize = 13f.dp
-        paint.color = if (startTime.dDays == System.currentTimeMillis().dDays) {
+        paint.color = if (beginTime.dDays == nowMillis.dDays) {
             if (drawCircle) {
                 ScheduleConfig.colorWhite
             } else {
                 ScheduleConfig.colorBlue1
             }
-        } else if (startTime < parentRender.calendar.firstDayOfMonthTime || startTime > parentRender.calendar.lastDayOfMonthTime) {
+        } else if (beginTime < parentRender.calendar.firstDayOfMonthTime || beginTime > parentRender.calendar.lastDayOfMonthTime) {
             ScheduleConfig.colorBlack3
         } else {
             ScheduleConfig.colorBlack1
         }
         paint.isFakeBoldText = true
-        canvas.drawText(startTime.dayOfMonth.toString(), textX, textY + 4f.dp, paint)
+        canvas.drawText(beginTime.dayOfMonth.toString(), textX, textY + 4f.dp, paint)
+    }
+
+    companion object {
+        private const val TAG = "DayView"
     }
 }
