@@ -1,4 +1,4 @@
-# 高仿飞书日程
+# 高仿飞书日历（Android）
 
 [![License](https://img.shields.io/badge/License%20-Apache%202-337ab7.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
