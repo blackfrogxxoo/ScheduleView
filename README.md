@@ -2,9 +2,9 @@
 
 [![License](https://img.shields.io/badge/License%20-Apache%202-337ab7.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
-市面上已经有了很多优秀的Todolist应用了，但是很多都需要付费使用。既然自己会写代码，为啥还要花钱用别人写的App呢？飞书上的日程很好用，那就照着写一个得了。
+分享了一些构建思路和实现细节在我的掘金专栏[《高仿飞书日历（Android）》](https://juejin.cn/column/7230242557351247930)上。
 
-先贴几张效果图。有空再讲讲心得。
+贴几张效果图。
 
 ### 三日视图
 ![image](https://github.com/blackfrogxxoo/SchedulerView/blob/master/%E4%B8%89%E6%97%A5%E8%A7%86%E5%9B%BE.gif)
